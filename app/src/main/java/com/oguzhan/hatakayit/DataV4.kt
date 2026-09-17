@@ -47,6 +47,7 @@ data class Score4(
 
 val periodStart4 = LocalDate.of(2026, 8, 1)
 val periodEnd4 = LocalDate.of(2027, 7, 31)
+
 val defaultOperators4 = listOf(
     Operator4("6095", "NUSRET BULUT"), Operator4("614", "LEVENT DOĞUER"),
     Operator4("6112", "AHMET SEZER"), Operator4("3388", "İLYAS ÖZDEMİR"),
@@ -54,10 +55,16 @@ val defaultOperators4 = listOf(
     Operator4("5828", "EREN YİĞİTOĞLU"), Operator4("686", "RUHAN SEVİL TEKEOĞLU"),
     Operator4("596", "FATİH HENDEKÇİ"), Operator4("2484", "MESUT MÜHÜRDAROÇ")
 )
-val recordTypes4 = listOf("Kaçan Hata", "Yakalanan Hata", "KY", "Kaizen", "Mesai", "Yıllık İzin", "Günlük İzin", "Rapor", "Devamsızlık")
-val machines4 = listOf("1600T-1", "1600T-2", "1600T-3", "1700T", "850T", "650T")
 
-val parts4 = listOf(
+val recordTypes4 = listOf(
+    "Kaçan Hata", "Yakalanan Hata", "KY", "Kaizen", "Mesai",
+    "Yıllık İzin", "Günlük İzin", "Rapor", "Devamsızlık"
+)
+
+val defaultMachines4 = listOf("1600T-1", "1600T-2", "1600T-3", "1700T", "850T", "650T")
+val machines4 = defaultMachines4
+
+val defaultParts4 = listOf(
     Part4("130D FR Upper Resin RH", "1700T"),
     Part4("130D FR Upper TPO RH", "1600T-1"),
     Part4("130D FR Lower RH - DELİKSİZ", "1600T-2"),
@@ -95,6 +102,7 @@ val parts4 = listOf(
     Part4("369 IP 10İNÇ KÜÇÜK RH", "850T"), Part4("369 IP 10İNÇ BÜYÜK RH", "850T"),
     Part4("BACK BOARD BÜYÜK", "850T")
 )
+val parts4 = defaultParts4
 val partMachine4 = parts4.associate { it.name to it.machine }
 
 val defectWeights4 = linkedMapOf(
@@ -103,6 +111,7 @@ val defectWeights4 = linkedMapOf(
     "Yabancı Madde" to 1.0, "Hatalı Setleme" to 1.0, "Kabarma" to 1.0,
     "Beyazlık" to 0.3, "Leke" to 0.1, "Deforme" to 0.2, "Diğer" to 1.0
 )
+
 val defectHelp4 = mapOf(
     "Şişme" to "Parça yüzeyinde şişme veya kabarma görünümü.",
     "Felt Eksik" to "Parçada olması gereken feltin bulunmaması veya yanlış pozisyonda olması.",
@@ -126,6 +135,8 @@ object Store4 {
     private const val RECORDS = "records"
     private const val REFERENCES = "defect_reference_photos"
     private const val OPERATORS = "operators_v1_2"
+    private const val MACHINES = "machines_v1_4"
+    private const val PARTS = "parts_v1_4"
 
     fun loadRecords(context: Context): List<Record4> = try {
         val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(RECORDS, "[]") ?: "[]"
@@ -185,6 +196,38 @@ object Store4 {
         operators.forEach { op -> a.put(JSONObject().apply { put("sicil", op.sicil); put("name", op.name); put("active", op.active) }) }
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(OPERATORS, a.toString()).apply()
     }
+
+    fun loadMachines(context: Context): List<String> = try {
+        val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(MACHINES, null)
+        if (raw.isNullOrBlank()) defaultMachines4 else {
+            val a = JSONArray(raw)
+            buildList { for (i in 0 until a.length()) add(a.getString(i)) }.ifEmpty { defaultMachines4 }
+        }
+    } catch (_: Exception) { defaultMachines4 }
+
+    fun saveMachines(context: Context, machines: List<String>) {
+        val a = JSONArray(); machines.forEach { a.put(it) }
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(MACHINES, a.toString()).apply()
+    }
+
+    fun loadParts(context: Context): List<Part4> = try {
+        val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(PARTS, null)
+        if (raw.isNullOrBlank()) defaultParts4 else {
+            val a = JSONArray(raw)
+            buildList {
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    add(Part4(o.getString("name"), o.getString("machine")))
+                }
+            }.ifEmpty { defaultParts4 }
+        }
+    } catch (_: Exception) { defaultParts4 }
+
+    fun saveParts(context: Context, parts: List<Part4>) {
+        val a = JSONArray()
+        parts.forEach { p -> a.put(JSONObject().apply { put("name", p.name); put("machine", p.machine) }) }
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(PARTS, a.toString()).apply()
+    }
 }
 
 fun activeMonths4(): Int {
@@ -198,13 +241,23 @@ fun inPeriod4(record: Record4): Boolean {
     return !d.isBefore(periodStart4) && !d.isAfter(periodEnd4)
 }
 
-fun calculate4(op: Operator4, all: List<Record4>): Score4 {
-    val rows = all.filter { it.operatorSicil == op.sicil && inPeriod4(it) }
+fun monthOf4(record: Record4): YearMonth = YearMonth.from(
+    Instant.ofEpochMilli(record.timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+)
+
+fun recordsForMonth4(all: List<Record4>, sicil: String, month: YearMonth): List<Record4> =
+    all.filter { it.operatorSicil == sicil && monthOf4(it) == month }
+
+private fun calculateFromRows4(rows: List<Record4>, targetMonths: Int): Score4 {
     fun sum(type: String) = rows.filter { it.type == type }.sumOf { it.amount }
     fun weighted(type: String) = rows.filter { it.type == type }.sumOf { it.amount * (defectWeights4[it.defect] ?: 1.0) }
-    val escaped = sum("Kaçan Hata"); val caught = sum("Yakalanan Hata"); val ky = sum("KY")
-    val kaizen = sum("Kaizen"); val overtime = sum("Mesai"); val absence = sum("Devamsızlık")
-    val months = activeMonths4()
+    val escaped = sum("Kaçan Hata")
+    val caught = sum("Yakalanan Hata")
+    val ky = sum("KY")
+    val kaizen = sum("Kaizen")
+    val overtime = sum("Mesai")
+    val absence = sum("Devamsızlık")
+    val months = targetMonths.coerceAtLeast(1)
     val quality = (35.0 + min(weighted("Yakalanan Hata") * .5, 5.0) - weighted("Kaçan Hata") * 4.0).coerceIn(0.0, 40.0)
     val kyScore = min(15.0, ky / (months * 6.0) * 15.0)
     val kaizenScore = min(15.0, kaizen / months * 15.0)
@@ -219,3 +272,9 @@ fun calculate4(op: Operator4, all: List<Record4>): Score4 {
         if (rows.isEmpty()) 0.0 else total, if (rows.isEmpty()) "—" else grade
     )
 }
+
+fun calculate4(op: Operator4, all: List<Record4>): Score4 =
+    calculateFromRows4(all.filter { it.operatorSicil == op.sicil && inPeriod4(it) }, activeMonths4())
+
+fun calculateMonth4(op: Operator4, all: List<Record4>, month: YearMonth): Score4 =
+    calculateFromRows4(recordsForMonth4(all, op.sicil, month), 1)
