@@ -19,12 +19,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun Entry4(records: SnapshotStateList<Record4>, references: Map<String, String>, operatorsAll: List<Operator4>, save: () -> Unit) {
+fun Entry4(
+    records: SnapshotStateList<Record4>,
+    references: Map<String, String>,
+    operatorsAll: List<Operator4>,
+    machines: List<String>,
+    parts: List<Part4>,
+    save: () -> Unit
+) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val activeOperators = operatorsAll.filter { it.active }
+    val availableMachines = machines.ifEmpty { defaultMachines4 }
+    val partMachineMap = parts.associate { it.name to it.machine }
+
     if (activeOperators.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.Center) {
-            Card { Text("Önce Ekip sekmesinden en az bir aktif operatör ekleyin.", Modifier.padding(18.dp)) }
+            Card { Text("Önce Yönetim sekmesinden en az bir aktif operatör ekleyin.", Modifier.padding(18.dp)) }
         }
         return
     }
@@ -36,7 +46,7 @@ fun Entry4(records: SnapshotStateList<Record4>, references: Map<String, String>,
     var type by remember { mutableStateOf(recordTypes4.first()) }
     var defect by remember { mutableStateOf(defectWeights4.keys.first()) }
     var amount by remember { mutableStateOf("1") }
-    var machine by remember { mutableStateOf(machines4.first()) }
+    var machine by remember { mutableStateOf(availableMachines.firstOrNull().orEmpty()) }
     var part by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var photoPath by remember { mutableStateOf("") }
@@ -44,6 +54,10 @@ fun Entry4(records: SnapshotStateList<Record4>, references: Map<String, String>,
     var message by remember { mutableStateOf("") }
     var deleteTarget by remember { mutableStateOf<Record4?>(null) }
     val isError = type == "Kaçan Hata" || type == "Yakalanan Hata"
+
+    LaunchedEffect(availableMachines) {
+        if (editingId == null && machine !in availableMachines) machine = availableMachines.firstOrNull().orEmpty()
+    }
 
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) saveGalleryPhoto4(context, uri, "record").takeIf { it.isNotBlank() }?.let { photoPath = it }
@@ -54,22 +68,26 @@ fun Entry4(records: SnapshotStateList<Record4>, references: Map<String, String>,
 
     fun resetForm() {
         operator = activeOperators.first(); type = recordTypes4.first(); defect = defectWeights4.keys.first()
-        amount = "1"; machine = machines4.first(); part = ""; note = ""; photoPath = ""; editingId = null
+        amount = "1"; machine = availableMachines.firstOrNull().orEmpty(); part = ""; note = ""; photoPath = ""; editingId = null
     }
     fun editRecord(record: Record4) {
         operator = activeOperators.firstOrNull { it.sicil == record.operatorSicil } ?: activeOperators.first()
         type = record.type; defect = record.defect.ifBlank { defectWeights4.keys.first() }
         amount = if (record.amount % 1.0 == 0.0) record.amount.toInt().toString() else record.amount.toString()
-        machine = record.machine.ifBlank { machines4.first() }; part = record.part; note = record.note
+        machine = record.machine.ifBlank { availableMachines.firstOrNull().orEmpty() }; part = record.part; note = record.note
         photoPath = record.photoPath; editingId = record.id; message = "✎ Düzenleme modu açık"
     }
 
     val partChoices = buildList {
         add("— Parça seç —")
-        if (part.isNotBlank() && !partMachine4.containsKey(part)) add(part)
-        addAll(parts4.map { it.name })
+        if (part.isNotBlank() && parts.none { it.name == part }) add(part)
+        addAll(parts.map { it.name }.distinct())
     }
     val selectedPart = if (part.isBlank()) "— Parça seç —" else part
+    val machineChoices = buildList {
+        if (machine.isNotBlank() && machine !in availableMachines) add(machine)
+        addAll(availableMachines)
+    }.distinct()
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -113,20 +131,20 @@ fun Entry4(records: SnapshotStateList<Record4>, references: Map<String, String>,
         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF))) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Parça / Kalıp ve Makine", fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                Text("Parçayı seçtiğinde makine otomatik gelir.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Parçayı seçtiğinde bağlı makine otomatik gelir. Listeyi Yönetim bölümünden değiştirebilirsin.", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Selector4("Parça / Kalıp", partChoices, selectedPart, { it }) { choice ->
                     if (choice == "— Parça seç —") part = ""
                     else {
                         part = choice
-                        partMachine4[choice]?.let { machine = it }
+                        partMachineMap[choice]?.let { machine = it }
                     }
                 }
-                if (part.isNotBlank() && partMachine4.containsKey(part)) {
+                if (part.isNotBlank() && partMachineMap.containsKey(part)) {
                     Surface(color = Color(0xFFDCFCE7), shape = RoundedCornerShape(10.dp)) {
-                        Text("✓ Otomatik makine: ${partMachine4[part]}", Modifier.fillMaxWidth().padding(10.dp), color = Color(0xFF166534), fontWeight = FontWeight.Bold)
+                        Text("✓ Otomatik makine: ${partMachineMap[part]}", Modifier.fillMaxWidth().padding(10.dp), color = Color(0xFF166534), fontWeight = FontWeight.Bold)
                     }
                 }
-                Selector4("Makine", machines4, machine, { it }) { machine = it }
+                if (machineChoices.isNotEmpty()) Selector4("Makine", machineChoices, machine, { it }) { machine = it }
                 Text("Gerekirse makineyi elle değiştirebilirsin.", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -161,7 +179,7 @@ fun Entry4(records: SnapshotStateList<Record4>, references: Map<String, String>,
                     } else {
                         val now = System.currentTimeMillis()
                         records.add(Record4(now, now, operator.sicil, type, if (isError) defect else "", n, machine, part, note.trim(), photoPath))
-                        save(); amount = "1"; part = ""; machine = machines4.first(); note = ""; photoPath = ""; message = "✓ Kayıt kaydedildi"
+                        save(); amount = "1"; part = ""; machine = availableMachines.firstOrNull().orEmpty(); note = ""; photoPath = ""; message = "✓ Kayıt kaydedildi"
                     }
                 }
             },
