@@ -1,0 +1,26 @@
+{
+  "name": "operator-takip-pc",
+  "version": "1.0.0",
+  "description": "Operatör Takip Windows masaüstü uygulaması",
+  "main": "main.js",
+  "author": "Oguzhan Cevik",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^32.1.2",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.oguzhan.operatorpc",
+    "productName": "Operator Takip PC",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "index.html"],
+    "win": {
+      "target": [{"target":"portable","arch":["x64"]}],
+      "artifactName": "Operator-Takip-PC-${version}.exe"
+    }
+  }
+}
