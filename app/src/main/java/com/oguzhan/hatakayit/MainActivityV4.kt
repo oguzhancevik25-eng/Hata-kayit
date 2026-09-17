@@ -26,6 +26,8 @@ fun OperatorApp4() {
     val records = remember { mutableStateListOf<Record4>().apply { addAll(Store4.loadRecords(context)) } }
     val refs = remember { mutableStateMapOf<String, String>().apply { putAll(Store4.loadReferences(context)) } }
     val operators = remember { mutableStateListOf<Operator4>().apply { addAll(Store4.loadOperators(context)) } }
+    val machines = remember { mutableStateListOf<String>().apply { addAll(Store4.loadMachines(context)) } }
+    val parts = remember { mutableStateListOf<Part4>().apply { addAll(Store4.loadParts(context)) } }
     var tab by remember { mutableIntStateOf(0) }
     var selectedSicil by remember { mutableStateOf(operators.firstOrNull { it.active }?.sicil ?: "") }
 
@@ -40,7 +42,7 @@ fun OperatorApp4() {
                 Surface(color = MaterialTheme.colorScheme.primary, shadowElevation = 3.dp) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp)) {
                         Text("Operatör Takip", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-                        Text("Parça-Makine Otomatik Seçim • v1.3", color = Color.White.copy(alpha = .82f), fontSize = 11.sp)
+                        Text("Aylık Grafik + Parça/Makine Yönetimi • v1.4", color = Color.White.copy(alpha = .82f), fontSize = 11.sp)
                     }
                 }
             },
@@ -50,7 +52,8 @@ fun OperatorApp4() {
                     NavigationBarItem(tab == 1, { tab = 1 }, { Text("+") }, label = { Text("Kayıt") })
                     NavigationBarItem(tab == 2, { tab = 2 }, { Text("▣") }, label = { Text("Hatalar") })
                     NavigationBarItem(tab == 3, { tab = 3 }, { Text("◎") }, label = { Text("Personel") })
-                    NavigationBarItem(tab == 4, { tab = 4 }, { Text("⚙") }, label = { Text("Ekip") })
+                    NavigationBarItem(tab == 4, { tab = 4 }, { Text("▥") }, label = { Text("Aylık") })
+                    NavigationBarItem(tab == 5, { tab = 5 }, { Text("⚙") }, label = { Text("Yönetim") })
                 }
             }
         ) { padding ->
@@ -58,17 +61,26 @@ fun OperatorApp4() {
             Box(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 when (tab) {
                     0 -> Dashboard4(records, active) { op -> selectedSicil = op.sicil; tab = 3 }
-                    1 -> Entry4(records, refs, operators) { Store4.saveRecords(context, records) }
+                    1 -> Entry4(records, refs, operators, machines, parts) { Store4.saveRecords(context, records) }
                     2 -> DefectLibrary4(refs) { Store4.saveReferences(context, refs) }
                     3 -> Person4(records, active, selectedSicil, onSelect = { selectedSicil = it.sicil }, onDelete = {
                         records.remove(it); Store4.saveRecords(context, records)
                     })
-                    else -> TeamManager4(operators, records) {
-                        Store4.saveOperators(context, operators)
-                        if (selectedSicil.isBlank() || operators.none { it.sicil == selectedSicil && it.active }) {
-                            selectedSicil = operators.firstOrNull { it.active }?.sicil ?: ""
-                        }
-                    }
+                    4 -> MonthlyAnalytics4(records, active)
+                    else -> ManagementHub4(
+                        operators = operators,
+                        records = records,
+                        machines = machines,
+                        parts = parts,
+                        saveOperators = {
+                            Store4.saveOperators(context, operators)
+                            if (selectedSicil.isBlank() || operators.none { it.sicil == selectedSicil && it.active }) {
+                                selectedSicil = operators.firstOrNull { it.active }?.sicil ?: ""
+                            }
+                        },
+                        saveMachines = { Store4.saveMachines(context, machines) },
+                        saveParts = { Store4.saveParts(context, parts) }
+                    )
                 }
             }
         }
