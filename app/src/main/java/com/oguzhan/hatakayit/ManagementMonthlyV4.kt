@@ -263,7 +263,7 @@ private fun ActivityBars4(score: Score4) {
                 Spacer(Modifier.height(3.dp))
                 Box(
                     Modifier.width(22.dp)
-                        .height(max(4.0, 78.0 * value / maxValue).dp)
+                        .height(max(4.0, 78.0 * value / maxValue).toFloat().dp)
                         .background(color, RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp))
                 )
                 Spacer(Modifier.height(3.dp)); Text(label, fontSize = 10.sp)
@@ -286,7 +286,7 @@ private fun YearScoreChart4(op: Operator4, records: List<Record4>, months: List<
                 Spacer(Modifier.height(3.dp))
                 Box(
                     Modifier.width(24.dp)
-                        .height(max(3.0, 108.0 * value / 100.0).dp)
+                        .height(max(3.0, 108.0 * value / 100.0).toFloat().dp)
                         .background(if (score.hasData) scoreColor4(value) else Color(0xFFE5E7EB), RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp))
                 )
                 Spacer(Modifier.height(3.dp))
