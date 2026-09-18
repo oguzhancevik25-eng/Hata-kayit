@@ -175,7 +175,7 @@ private fun monthsInPeriod4(): List<YearMonth> {
 private fun monthLabel4(month: YearMonth): String = month.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale("tr", "TR"))).replaceFirstChar { it.uppercase(Locale("tr", "TR")) }
 
 @Composable
-fun MonthlyAnalytics4(records: List<Record4>, operators: List<Operator4>) {
+fun MonthlyAnalytics4(records: List<Record4>, operators: List<Operator4>, settings: ScoringSettings4) {
     if (operators.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Aktif personel yok") }
         return
@@ -188,7 +188,7 @@ fun MonthlyAnalytics4(records: List<Record4>, operators: List<Operator4>) {
         if (operators.none { it.sicil == trendOperator.sicil }) trendOperator = operators.first()
     }
 
-    val monthScores = operators.map { it to calculateMonth4(it, records, selectedMonth) }
+    val monthScores = operators.map { it to calculateMonthConfigured4(it, records, selectedMonth, settings) }
     val monthRecords = records.filter { monthOf4(it) == selectedMonth && operators.any { op -> op.sicil == it.operatorSicil } }
 
     LazyColumn(contentPadding = PaddingValues(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -209,7 +209,7 @@ fun MonthlyAnalytics4(records: List<Record4>, operators: List<Operator4>) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("12 Aylık Puan Grafiği", fontSize = 19.sp, fontWeight = FontWeight.Bold)
                     Selector4("Operatör", operators, trendOperator, { "${it.sicil} - ${it.name}" }) { trendOperator = it }
-                    YearScoreChart4(trendOperator, records, months)
+                    YearScoreChart4(trendOperator, records, months, settings)
                 }
             }
         }
@@ -273,13 +273,13 @@ private fun ActivityBars4(score: Score4) {
 }
 
 @Composable
-private fun YearScoreChart4(op: Operator4, records: List<Record4>, months: List<YearMonth>) {
+private fun YearScoreChart4(op: Operator4, records: List<Record4>, months: List<YearMonth>, settings: ScoringSettings4) {
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).height(155.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom
     ) {
         months.forEach { month ->
-            val score = calculateMonth4(op, records, month)
+            val score = calculateMonthConfigured4(op, records, month, settings)
             val value = if (score.hasData) score.total.coerceIn(0.0, 100.0) else 0.0
             Column(Modifier.width(42.dp).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
                 Text(if (score.hasData) f14(value) else "—", fontSize = 9.sp)
