@@ -20,8 +20,8 @@ import androidx.compose.ui.unit.sp
 import java.util.Locale
 
 @Composable
-fun Dashboard4(records: List<Record4>, operators: List<Operator4>, openPerson: (Operator4) -> Unit) {
-    val summaries = operators.map { it to calculate4(it, records) }
+fun Dashboard4(records: List<Record4>, operators: List<Operator4>, settings: ScoringSettings4, openPerson: (Operator4) -> Unit) {
+    val summaries = operators.map { it to calculateConfigured4(it, records, settings) }
     val withData = summaries.filter { it.second.hasData }
     LazyColumn(contentPadding = PaddingValues(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
@@ -130,8 +130,8 @@ fun Person4(records: List<Record4>, operators: List<Operator4>, selectedSicil: S
             Card {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                     Text("Puan Bileşenleri", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    ScoreBar4("Kalite", score.quality, 40.0); ScoreBar4("KY", score.kyScore, 15.0)
-                    ScoreBar4("Kaizen", score.kaizenScore, 15.0); ScoreBar4("Devam", score.attendance, 20.0); ScoreBar4("Mesai", score.overtimeScore, 10.0)
+                    ScoreBar4("Kalite", score.quality, settings.qualityMax); ScoreBar4("KY", score.kyScore, settings.kyMax)
+                    ScoreBar4("Kaizen", score.kaizenScore, settings.kaizenMax); ScoreBar4("Devam", score.attendance, settings.attendanceMax); ScoreBar4("Mesai", score.overtimeScore, settings.overtimeMax)
                 }
             }
         }
