@@ -179,15 +179,14 @@ object XlsxWriter7 {
                 append("</row>")
             }
             append("</sheetData>")
+            s.autoFilterRef?.takeIf { it.isNotBlank() }?.let { append("""<autoFilter ref="${xml(it)}"/>""") }
             if (s.merges.isNotEmpty()) {
                 append("""<mergeCells count="${s.merges.size}">""")
                 s.merges.forEach { append("""<mergeCell ref="${xml(it)}"/>""") }
                 append("</mergeCells>")
             }
-            s.autoFilterRef?.takeIf { it.isNotBlank() }?.let { append("""<autoFilter ref="${xml(it)}"/>""") }
             append("""<pageMargins left="0.25" right="0.25" top="0.45" bottom="0.45" header="0.2" footer="0.2"/>""")
             append("""<pageSetup orientation="${if (s.landscape) "landscape" else "portrait"}" paperSize="9" fitToWidth="1" fitToHeight="0"/>""")
-            append("""<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>""")
             append("</worksheet>")
         }
     }
