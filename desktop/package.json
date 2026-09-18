@@ -1,6 +1,6 @@
 {
   "name": "operator-takip-pc",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Operatör Takip Windows masaüstü uygulaması",
   "main": "main.js",
   "author": "Oguzhan Cevik",
@@ -17,7 +17,7 @@
     "appId": "com.oguzhan.operatorpc",
     "productName": "Operator Takip PC",
     "directories": { "output": "dist" },
-    "files": ["main.js", "index.html"],
+    "files": ["main.js", "index.html", "v15-extra.js"],
     "win": {
       "target": [{"target":"portable","arch":["x64"]}],
       "artifactName": "Operator-Takip-PC-${version}.exe"
