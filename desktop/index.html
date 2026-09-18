@@ -79,6 +79,9 @@ function addOp(){let s=document.getElementById('newSicil').value.trim(),n=docume
 function backup(){page.innerHTML=`<div class="top"><div><div class="title">Yedek / Aktarım</div><div class="sub">Bilgisayardaki verileri JSON dosyasına yedekle ve geri yükle.</div></div></div><div class="grid two"><div class="card"><div class="sectionTitle">Yedek Al</div><p class="sub">Tüm operatörler, kayıtlar, fotoğraflar ve hata kütüphanesi tek dosyada kaydedilir.</p><button class="btn primary" onclick="exportData()">YEDEĞİ İNDİR</button></div><div class="card"><div class="sectionTitle">Yedekten Geri Yükle</div><p class="sub">Daha önce alınan JSON yedeğini seç.</p><button class="btn ghost" onclick="importFile.click()">DOSYA SEÇ</button></div></div><div class="card" style="margin-top:16px"><div class="sectionTitle">Telefon + PC</div><div class="hint">PC sürümü telefondaki v1.5 özelliklerini içerir ve bilgisayarda çevrimdışı çalışır. Telefon ile PC verileri şu an otomatik senkron değildir; JSON yedek/geri yükleme ile PC verisini taşıyabilirsin.</div></div>`}
 function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='Operator-Takip-PC-Yedek-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)}
 importFile.onchange=e=>{let f=e.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let x=JSON.parse(rd.result);if(!x.operators||!x.records)throw Error();if(confirm('Mevcut veriler yedek dosyasıyla değiştirilsin mi?')){db=normalizeDb(x);save();render()}}catch(err){alert('Geçersiz yedek dosyası')}};rd.readAsText(f)};
+</script>
+<script src="v15-extra.js"></script>
+<script>
 render();
 </script>
 </body>
