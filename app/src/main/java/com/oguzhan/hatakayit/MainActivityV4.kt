@@ -28,6 +28,7 @@ fun OperatorApp4() {
     val operators = remember { mutableStateListOf<Operator4>().apply { addAll(Store4.loadOperators(context)) } }
     val machines = remember { mutableStateListOf<String>().apply { addAll(Store4.loadMachines(context)) } }
     val parts = remember { mutableStateListOf<Part4>().apply { addAll(Store4.loadParts(context)) } }
+    var scoringSettings by remember { mutableStateOf(loadScoringSettings4(context)) }
     var tab by remember { mutableIntStateOf(0) }
     var selectedSicil by remember { mutableStateOf(operators.firstOrNull { it.active }?.sicil ?: "") }
 
@@ -42,7 +43,7 @@ fun OperatorApp4() {
                 Surface(color = MaterialTheme.colorScheme.primary, shadowElevation = 3.dp) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp)) {
                         Text("Operatör Takip", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-                        Text("Aylık Grafik + Parça/Makine Yönetimi • v1.4", color = Color.White.copy(alpha = .82f), fontSize = 11.sp)
+                        Text("Ayarlanabilir Puanlama • v1.5", color = Color.White.copy(alpha = .82f), fontSize = 11.sp)
                     }
                 }
             },
@@ -50,24 +51,25 @@ fun OperatorApp4() {
                 NavigationBar {
                     NavigationBarItem(tab == 0, { tab = 0 }, { Text("⌂") }, label = { Text("Ana") })
                     NavigationBarItem(tab == 1, { tab = 1 }, { Text("+") }, label = { Text("Kayıt") })
-                    NavigationBarItem(tab == 2, { tab = 2 }, { Text("▣") }, label = { Text("Hatalar") })
-                    NavigationBarItem(tab == 3, { tab = 3 }, { Text("◎") }, label = { Text("Personel") })
+                    NavigationBarItem(tab == 2, { tab = 2 }, { Text("▣") }, label = { Text("Hata") })
+                    NavigationBarItem(tab == 3, { tab = 3 }, { Text("◎") }, label = { Text("Kişi") })
                     NavigationBarItem(tab == 4, { tab = 4 }, { Text("▥") }, label = { Text("Aylık") })
-                    NavigationBarItem(tab == 5, { tab = 5 }, { Text("⚙") }, label = { Text("Yönetim") })
+                    NavigationBarItem(tab == 5, { tab = 5 }, { Text("⚙") }, label = { Text("Ayar") })
+                    NavigationBarItem(tab == 6, { tab = 6 }, { Text("Σ") }, label = { Text("Puan") })
                 }
             }
         ) { padding ->
             val active = operators.filter { it.active }
             Box(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 when (tab) {
-                    0 -> Dashboard4(records, active) { op -> selectedSicil = op.sicil; tab = 3 }
+                    0 -> Dashboard4(records, active, scoringSettings) { op -> selectedSicil = op.sicil; tab = 3 }
                     1 -> Entry4(records, refs, operators, machines, parts) { Store4.saveRecords(context, records) }
                     2 -> DefectLibrary4(refs) { Store4.saveReferences(context, refs) }
-                    3 -> Person4(records, active, selectedSicil, onSelect = { selectedSicil = it.sicil }, onDelete = {
+                    3 -> Person4(records, active, selectedSicil, scoringSettings, onSelect = { selectedSicil = it.sicil }, onDelete = {
                         records.remove(it); Store4.saveRecords(context, records)
                     })
-                    4 -> MonthlyAnalytics4(records, active)
-                    else -> ManagementHub4(
+                    4 -> MonthlyAnalytics4(records, active, scoringSettings)
+                    5 -> ManagementHub4(
                         operators = operators,
                         records = records,
                         machines = machines,
@@ -81,6 +83,10 @@ fun OperatorApp4() {
                         saveMachines = { Store4.saveMachines(context, machines) },
                         saveParts = { Store4.saveParts(context, parts) }
                     )
+                    else -> ScoringSettingsScreen4(scoringSettings) { updated ->
+                        scoringSettings = updated
+                        saveScoringSettings4(context, updated)
+                    }
                 }
             }
         }
