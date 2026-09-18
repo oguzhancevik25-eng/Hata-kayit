@@ -29,7 +29,12 @@ fun ManagementHub4(
     parts: SnapshotStateList<Part4>,
     saveOperators: () -> Unit,
     saveMachines: () -> Unit,
-    saveParts: () -> Unit
+    saveParts: () -> Unit,
+    syncCode: String,
+    syncStatus: String,
+    syncBusy: Boolean,
+    saveSyncCode: (String) -> Unit,
+    syncNow: () -> Unit
 ) {
     var section by remember { mutableStateOf("Ekip") }
     Column(Modifier.fillMaxSize()) {
@@ -43,13 +48,16 @@ fun ManagementHub4(
             else OutlinedButton({ section = "Makine" }) { Text("Makineler") }
             if (section == "Parça") Button({ section = "Parça" }) { Text("Parça / Kalıp") }
             else OutlinedButton({ section = "Parça" }) { Text("Parça / Kalıp") }
+            if (section == "Senkron") Button({ section = "Senkron" }) { Text("Senkron") }
+            else OutlinedButton({ section = "Senkron" }) { Text("Senkron") }
         }
         HorizontalDivider()
         Box(Modifier.weight(1f)) {
             when (section) {
                 "Ekip" -> TeamManager4(operators, records, saveOperators)
                 "Makine" -> MachineManager4(machines, parts, saveMachines)
-                else -> PartManager4(parts, machines, saveParts)
+                "Parça" -> PartManager4(parts, machines, saveParts)
+                else -> CloudSyncScreen4(syncCode, syncStatus, syncBusy, saveSyncCode, syncNow)
             }
         }
     }
