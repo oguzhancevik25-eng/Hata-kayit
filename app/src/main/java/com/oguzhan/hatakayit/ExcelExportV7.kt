@@ -82,7 +82,7 @@ object XlsxWriter7 {
     private fun workbookXml(sheets: List<XlsxSheet7>): String = buildString {
         append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>""")
         append("""<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">""")
-        append("<bookViews><workbookView activeTab="0"/></bookViews><sheets>")
+        append("""<bookViews><workbookView activeTab="0"/></bookViews><sheets>""")
         sheets.forEachIndexed { i, s ->
             append("""<sheet name="${xml(safeSheetName(s.name))}" sheetId="${i + 1}" r:id="rId${i + 1}"/>""")
         }
@@ -155,8 +155,9 @@ object XlsxWriter7 {
         return buildString {
             append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>""")
             append("""<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">""")
+            append("""<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>""")
             append("""<dimension ref="A1:$endRef"/>""")
-            append("<sheetViews><sheetView workbookViewId="0">")
+            append("""<sheetViews><sheetView workbookViewId="0">""")
             if (s.freezeRows > 0) {
                 append("""<pane ySplit="${s.freezeRows}" topLeftCell="A${s.freezeRows + 1}" activePane="bottomLeft" state="frozen"/>""")
             }
