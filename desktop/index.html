@@ -12,7 +12,7 @@
 </head>
 <body>
 <div class="app">
-<aside class="side"><div class="brand">Operatör Takip</div><div class="version">Windows PC • v1.5</div><div class="nav" id="nav"></div></aside>
+<aside class="side"><div class="brand">Operatör Takip</div><div class="version">Windows PC • v1.6</div><div class="nav" id="nav"></div></aside>
 <main class="main"><div id="page"></div></main>
 </div>
 <input type="file" id="importFile" accept="application/json" class="hidden" />
@@ -31,9 +31,9 @@ function normalizeDb(x){
   x.scoring=Object.assign({},defaultScoring,x.scoring||{});
   return x;
 }
-let db=load();let current='dashboard';let editId=null;
+let db=load();let current='dashboard';let editId=null;let cloudDirtyPC=false;let cloudApplyingPC=false;
 function load(){try{const x=JSON.parse(localStorage.getItem(K));if(x)return normalizeDb(x)}catch(e){}return normalizeDb({operators:defaults.operators,records:[],refs:{},parts:defaults.parts,machines:defaults.machines,scoring:defaultScoring})}
-function save(){localStorage.setItem(K,JSON.stringify(db))}
+function save(){localStorage.setItem(K,JSON.stringify(db));if(!cloudApplyingPC)cloudDirtyPC=true}
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const fmt=n=>Number(n||0).toLocaleString('tr-TR',{maximumFractionDigits:1});
 const date=t=>new Date(t).toLocaleString('tr-TR');
@@ -59,10 +59,10 @@ function scoreRows(rows,targetMonths){
   return{rows:rows.length,escaped:sum('Kaçan Hata'),caught:sum('Yakalanan Hata'),KY:sum('KY'),kaizen:sum('Kaizen'),mesai:sum('Mesai'),annualLeave:sum('Yıllık İzin'),dailyLeave:sum('Günlük İzin'),izin:sum('Yıllık İzin')+sum('Günlük İzin'),rapor:sum('Rapor'),devam:sum('Devamsızlık'),q,ky,k,dev,mes,total:rows.length?total:0,grade};
 }
 function summary(op){return scoreRows(db.records.filter(r=>r.operatorSicil===op.sicil&&inPeriodRecord(r)),months())}
-const nav=[['dashboard','Ana Panel'],['entry','Kayıt Girişi'],['defects','Hata Kütüphanesi'],['people','Personel'],['monthly','Aylık Analiz'],['management','Yönetim'],['scoring','Puanlama'],['backup','Yedek / Aktarım']];
+const nav=[['dashboard','Ana Panel'],['entry','Kayıt Girişi'],['defects','Hata Kütüphanesi'],['people','Personel'],['monthly','Aylık Analiz'],['management','Yönetim'],['scoring','Puanlama'],['sync','Senkron'],['backup','Yedek / Aktarım']];
 function renderNav(){document.getElementById('nav').innerHTML=nav.map(x=>`<button class="${current===x[0]?'active':''}" onclick="go('${x[0]}')">${x[1]}</button>`).join('')}
 function go(p){current=p;editId=null;render()}
-function render(){renderNav();({dashboard,entry,defects,people,monthly,management,scoring,backup}[current]||dashboard)()}
+function render(){renderNav();({dashboard,entry,defects,people,monthly,management,scoring,sync,backup}[current]||dashboard)()}
 function dashboard(){let ops=activeOps(),ss=ops.map(summary),scores=ss.filter(x=>x.rows).map(x=>x.total),avg=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;let escaped=ss.reduce((a,x)=>a+x.escaped,0),caught=ss.reduce((a,x)=>a+x.caught,0),ky=ss.reduce((a,x)=>a+x.KY,0),ka=ss.reduce((a,x)=>a+x.kaizen,0);page.innerHTML=`<div class="top"><div><div class="title">Yönetici Dashboard</div><div class="sub">01.08.2026 – 31.07.2027 • Aktif hedef ayı: ${months()}</div></div><button class="btn primary" onclick="go('entry')">+ Yeni Kayıt</button></div><div class="grid kpis"><div class="card kpi"><div class="n">${fmt(avg)}</div><div class="l">Takım Ortalama Puan</div></div><div class="card kpi"><div class="n">${fmt(escaped)}</div><div class="l">Kaçan Hata</div></div><div class="card kpi"><div class="n">${fmt(caught)}</div><div class="l">Yakalanan Hata</div></div><div class="card kpi"><div class="n">${fmt(ky)}</div><div class="l">KY</div></div><div class="card kpi"><div class="n">${fmt(ka)}</div><div class="l">Kaizen</div></div><div class="card kpi"><div class="n">${ops.length}</div><div class="l">Aktif Operatör</div></div></div><div class="card" style="margin-top:16px"><div class="sectionTitle">Operatör Performansları</div><div class="tablewrap"><table class="table"><thead><tr><th>Sicil</th><th>Personel</th><th>Puan</th><th>Sınıf</th><th>KY</th><th>Kaizen</th><th>Kaçan</th><th>Yakalanan</th><th>Mesai</th></tr></thead><tbody>${ops.map(o=>{let s=summary(o);return`<tr><td>${esc(o.sicil)}</td><td>${esc(o.name)}</td><td><b>${s.rows?fmt(s.total):'—'}</b></td><td><span class="pill ${s.grade==='A'?'p-green':s.grade==='B'?'p-blue':s.grade==='C'?'p-yellow':'p-red'}">${s.grade}</span></td><td>${fmt(s.KY)}</td><td>${fmt(s.kaizen)}</td><td>${fmt(s.escaped)}</td><td>${fmt(s.caught)}</td><td>${fmt(s.mesai)}</td></tr>`}).join('')}</tbody></table></div></div>`}
 function entry(){let ops=activeOps();if(!ops.length){page.innerHTML='<div class="card warn">Önce Ekip Yönetimi bölümünden aktif operatör ekleyin.</div>';return}let r=editId?db.records.find(x=>x.id===editId):null;let selectedPart=r?.part||'',machine=r?.machine||(db.machines[0]||'');page.innerHTML=`<div class="top"><div><div class="title">${r?'Kaydı Düzenle':'Günlük Kayıt Girişi'}</div><div class="sub">Parçayı seçtiğinde makine otomatik gelir.</div></div>${r?'<button class="btn ghost" onclick="editId=null;entry()">Düzenlemeyi İptal</button>':''}</div><div class="card"><div class="formgrid"><div class="field"><label>Operatör</label><select id="op">${ops.map(o=>`<option value="${esc(o.sicil)}" ${r?.operatorSicil===o.sicil?'selected':''}>${esc(o.sicil+' - '+o.name)}</option>`).join('')}</select></div><div class="field"><label>Kayıt Türü</label><select id="type" onchange="toggleDefect()">${defaults.types.map(x=>`<option ${r?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field" id="defectField"><label>Hata Türü</label><select id="defect">${Object.keys(defaults.defects).map(x=>`<option ${r?.defect===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Miktar / Saat / Gün</label><input id="amount" type="number" min="0" step="0.1" value="${r?.amount??1}"></div><div class="field span2"><label>Parça / Kalıp</label><select id="part" onchange="partChanged()"><option value="">— Parça seç —</option>${db.parts.map(p=>`<option value="${esc(p.name)}" ${selectedPart===p.name?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div><div class="field"><label>Makine</label><select id="machine">${db.machines.map(x=>`<option ${machine===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div><div class="field"><label>Fotoğraf</label><input id="photo" type="file" accept="image/*"></div><div class="field span4"><label>Açıklama / Detay</label><textarea id="note">${esc(r?.note||'')}</textarea></div><div class="span4 toolbar"><button class="btn primary" onclick="saveRecord()">${r?'KAYDI GÜNCELLE':'KAYDI KAYDET'}</button></div></div></div><div class="card" style="margin-top:16px"><div class="sectionTitle">Son Kayıtlar</div>${db.records.slice(-12).reverse().map(recordCard).join('')||'<div class="sub">Henüz kayıt yok.</div>'}</div>`;toggleDefect()}
 function toggleDefect(){let t=document.getElementById('type');let f=document.getElementById('defectField');if(t&&f)f.classList.toggle('hidden',!['Kaçan Hata','Yakalanan Hata'].includes(t.value))}
@@ -81,6 +81,7 @@ function exportData(){let a=document.createElement('a');a.href=URL.createObjectU
 importFile.onchange=e=>{let f=e.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let x=JSON.parse(rd.result);if(!x.operators||!x.records)throw Error();if(confirm('Mevcut veriler yedek dosyasıyla değiştirilsin mi?')){db=normalizeDb(x);save();render()}}catch(err){alert('Geçersiz yedek dosyası')}};rd.readAsText(f)};
 </script>
 <script src="v15-extra.js"></script>
+<script src="v16-sync.js"></script>
 <script>
 render();
 </script>

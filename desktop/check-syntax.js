@@ -1,7 +1,7 @@
 const fs = require('fs');
 const vm = require('vm');
 
-for (const file of ['v15-extra.js']) {
+for (const file of ['v15-extra.js','v16-sync.js']) {
   const source = fs.readFileSync(file, 'utf8');
   new vm.Script(source, { filename: file });
 }

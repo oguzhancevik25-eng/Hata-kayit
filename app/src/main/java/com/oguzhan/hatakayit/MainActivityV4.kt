@@ -12,6 +12,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivityV4 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,8 +34,104 @@ fun OperatorApp4() {
     val machines = remember { mutableStateListOf<String>().apply { addAll(Store4.loadMachines(context)) } }
     val parts = remember { mutableStateListOf<Part4>().apply { addAll(Store4.loadParts(context)) } }
     var scoringSettings by remember { mutableStateOf(loadScoringSettings4(context)) }
+
+    var syncCode by remember { mutableStateOf(CloudSync4.loadCode(context)) }
+    var syncStatus by remember { mutableStateOf("") }
+    var syncBusy by remember { mutableStateOf(false) }
+    var cloudDirty by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
     var tab by remember { mutableIntStateOf(0) }
     var selectedSicil by remember { mutableStateOf(operators.firstOrNull { it.active }?.sicil ?: "") }
+
+    fun currentSnapshot() = CloudSnapshot4(
+        operators = operators.toList(),
+        records = records.toList(),
+        refs = refs.toMap(),
+        machines = machines.toList(),
+        parts = parts.toList(),
+        scoring = scoringSettings
+    )
+
+    fun saveAllLocal(snapshot: CloudSnapshot4) {
+        operators.clear(); operators.addAll(snapshot.operators)
+        records.clear(); records.addAll(snapshot.records)
+        refs.clear(); refs.putAll(snapshot.refs)
+        machines.clear(); machines.addAll(snapshot.machines)
+        parts.clear(); parts.addAll(snapshot.parts)
+        scoringSettings = snapshot.scoring
+
+        Store4.saveOperators(context, operators)
+        Store4.saveRecords(context, records)
+        Store4.saveReferences(context, refs)
+        Store4.saveMachines(context, machines)
+        Store4.saveParts(context, parts)
+        saveScoringSettings4(context, scoringSettings)
+
+        if (selectedSicil.isBlank() || operators.none { it.sicil == selectedSicil && it.active }) {
+            selectedSicil = operators.firstOrNull { it.active }?.sicil ?: ""
+        }
+    }
+
+    fun markRecordsSaved() {
+        Store4.saveRecords(context, records)
+        cloudDirty = true
+    }
+    fun markRefsSaved() {
+        Store4.saveReferences(context, refs)
+        cloudDirty = true
+    }
+    fun markOperatorsSaved() {
+        Store4.saveOperators(context, operators)
+        cloudDirty = true
+        if (selectedSicil.isBlank() || operators.none { it.sicil == selectedSicil && it.active }) {
+            selectedSicil = operators.firstOrNull { it.active }?.sicil ?: ""
+        }
+    }
+    fun markMachinesSaved() {
+        Store4.saveMachines(context, machines)
+        cloudDirty = true
+    }
+    fun markPartsSaved() {
+        Store4.saveParts(context, parts)
+        cloudDirty = true
+    }
+
+    suspend fun syncOnce() {
+        if (syncCode.isBlank() || syncBusy) return
+        syncBusy = true
+        try {
+            if (cloudDirty) {
+                val snapshot = currentSnapshot()
+                withContext(Dispatchers.IO) { CloudSync4.push(context, syncCode, snapshot) }
+                cloudDirty = false
+                syncStatus = "✓ Değişiklikler buluta gönderildi"
+            } else {
+                val remote = withContext(Dispatchers.IO) { CloudSync4.pull(context, syncCode) }
+                if (remote == null) {
+                    val snapshot = currentSnapshot()
+                    withContext(Dispatchers.IO) { CloudSync4.push(context, syncCode, snapshot) }
+                    syncStatus = "✓ İlk veri buluta yüklendi"
+                } else {
+                    saveAllLocal(remote)
+                    syncStatus = "✓ Telefon ve PC verileri güncel"
+                }
+            }
+        } catch (e: Exception) {
+            syncStatus = e.message ?: "Senkron hatası"
+        } finally {
+            syncBusy = false
+        }
+    }
+
+    LaunchedEffect(syncCode) {
+        if (syncCode.isBlank()) return@LaunchedEffect
+        syncOnce()
+        while (isActive) {
+            delay(15000)
+            syncOnce()
+        }
+    }
 
     MaterialTheme(
         colorScheme = lightColorScheme(
@@ -43,7 +144,7 @@ fun OperatorApp4() {
                 Surface(color = MaterialTheme.colorScheme.primary, shadowElevation = 3.dp) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp)) {
                         Text("Operatör Takip", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-                        Text("Ayarlanabilir Puanlama • v1.5", color = Color.White.copy(alpha = .82f), fontSize = 11.sp)
+                        Text("Telefon + PC Bulut Senkron • v1.6", color = Color.White.copy(alpha = .82f), fontSize = 11.sp)
                     }
                 }
             },
@@ -63,10 +164,10 @@ fun OperatorApp4() {
             Box(Modifier.padding(padding).fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 when (tab) {
                     0 -> Dashboard4(records, active, scoringSettings) { op -> selectedSicil = op.sicil; tab = 3 }
-                    1 -> Entry4(records, refs, operators, machines, parts) { Store4.saveRecords(context, records) }
-                    2 -> DefectLibrary4(refs) { Store4.saveReferences(context, refs) }
+                    1 -> Entry4(records, refs, operators, machines, parts) { markRecordsSaved() }
+                    2 -> DefectLibrary4(refs) { markRefsSaved() }
                     3 -> Person4(records, active, selectedSicil, scoringSettings, onSelect = { selectedSicil = it.sicil }, onDelete = {
-                        records.remove(it); Store4.saveRecords(context, records)
+                        records.remove(it); markRecordsSaved()
                     })
                     4 -> MonthlyAnalytics4(records, active, scoringSettings)
                     5 -> ManagementHub4(
@@ -74,18 +175,23 @@ fun OperatorApp4() {
                         records = records,
                         machines = machines,
                         parts = parts,
-                        saveOperators = {
-                            Store4.saveOperators(context, operators)
-                            if (selectedSicil.isBlank() || operators.none { it.sicil == selectedSicil && it.active }) {
-                                selectedSicil = operators.firstOrNull { it.active }?.sicil ?: ""
-                            }
+                        saveOperators = { markOperatorsSaved() },
+                        saveMachines = { markMachinesSaved() },
+                        saveParts = { markPartsSaved() },
+                        syncCode = syncCode,
+                        syncStatus = syncStatus,
+                        syncBusy = syncBusy,
+                        saveSyncCode = { code ->
+                            syncCode = code.trim()
+                            CloudSync4.saveCode(context, syncCode)
+                            syncStatus = if (syncCode.isBlank()) "Senkron kapatıldı" else "Kod kaydedildi, bağlantı kuruluyor..."
                         },
-                        saveMachines = { Store4.saveMachines(context, machines) },
-                        saveParts = { Store4.saveParts(context, parts) }
+                        syncNow = { scope.launch { syncOnce() } }
                     )
                     else -> ScoringSettingsScreen4(scoringSettings) { updated ->
                         scoringSettings = updated
                         saveScoringSettings4(context, updated)
+                        cloudDirty = true
                     }
                 }
             }
