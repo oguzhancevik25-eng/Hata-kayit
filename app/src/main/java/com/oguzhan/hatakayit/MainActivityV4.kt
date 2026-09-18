@@ -144,7 +144,7 @@ fun OperatorApp4() {
                 Surface(color = MaterialTheme.colorScheme.primary, shadowElevation = 3.dp) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp)) {
                         Text("Operatör Takip", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-                        Text("Telefon + PC Bulut Senkron • v1.6", color = Color.White.copy(alpha = .82f), fontSize = 11.sp)
+                        Text("Excel Rapor Merkezi • v1.7", color = Color.White.copy(alpha = .82f), fontSize = 11.sp)
                     }
                 }
             },
@@ -157,6 +157,7 @@ fun OperatorApp4() {
                     NavigationBarItem(tab == 4, { tab = 4 }, { Text("▥") }, label = { Text("Aylık") })
                     NavigationBarItem(tab == 5, { tab = 5 }, { Text("⚙") }, label = { Text("Ayar") })
                     NavigationBarItem(tab == 6, { tab = 6 }, { Text("Σ") }, label = { Text("Puan") })
+                    NavigationBarItem(tab == 7, { tab = 7 }, { Text("XLS") }, label = { Text("Excel") })
                 }
             }
         ) { padding ->
@@ -188,11 +189,19 @@ fun OperatorApp4() {
                         },
                         syncNow = { scope.launch { syncOnce() } }
                     )
-                    else -> ScoringSettingsScreen4(scoringSettings) { updated ->
+                    6 -> ScoringSettingsScreen4(scoringSettings) { updated ->
                         scoringSettings = updated
                         saveScoringSettings4(context, updated)
                         cloudDirty = true
                     }
+                    else -> ExcelExportScreen4(
+                        records = records,
+                        operators = operators,
+                        machines = machines,
+                        parts = parts,
+                        refs = refs,
+                        settings = scoringSettings
+                    )
                 }
             }
         }
