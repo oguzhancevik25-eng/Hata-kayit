@@ -97,13 +97,13 @@ fun DefectLibrary4(refs: MutableMap<String, String>, saveRefs: () -> Unit) {
 }
 
 @Composable
-fun Person4(records: List<Record4>, operators: List<Operator4>, selectedSicil: String, onSelect: (Operator4) -> Unit, onDelete: (Record4) -> Unit) {
+fun Person4(records: List<Record4>, operators: List<Operator4>, selectedSicil: String, settings: ScoringSettings4, onSelect: (Operator4) -> Unit, onDelete: (Record4) -> Unit) {
     if (operators.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.Center) { Text("Aktif personel yok") }
         return
     }
     val selected = operators.firstOrNull { it.sicil == selectedSicil } ?: operators.first()
-    val score = calculate4(selected, records)
+    val score = calculateConfigured4(selected, records, settings)
     val history = records.filter { it.operatorSicil == selected.sicil && inPeriod4(it) }.sortedByDescending { it.timestamp }
     LazyColumn(contentPadding = PaddingValues(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { Selector4("Operatör", operators, selected, { "${it.sicil} - ${it.name}" }, onSelect) }
