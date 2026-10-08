@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.*
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,6 +16,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +38,7 @@ import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileInputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -79,13 +83,35 @@ fun BeforeAfterProApp() {
         result = null
     }
 
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null && selectedIndex in slots.indices) {
-            val detected = detectPhotoDate(context, uri)
-            val old = slots[selectedIndex]
-            slots[selectedIndex] = old.copy(uri = uri, dateText = detected)
-            status = "✓ Fotoğraf ${selectedIndex + 1} eklendi"
-            result = null
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) { }
+
+            try {
+                val probe = decodeScaledBitmap12(context, uri, 1200)
+                    ?: error("Bu fotoğraf biçimi açılamadı")
+                probe.recycle()
+
+                val detected = detectPhotoDate(context, uri)
+                val old = slots[selectedIndex]
+                slots[selectedIndex] = old.copy(
+                    uri = uri,
+                    dateText = detected,
+                    scale = 1f,
+                    offsetX = 0f,
+                    offsetY = 0f,
+                    rotation = 0f
+                )
+                status = "✓ Fotoğraf ${selectedIndex + 1} yüklendi ve görüntülendi"
+                result = null
+            } catch (e: Exception) {
+                status = "Fotoğraf yükleme hatası: ${e.message ?: "dosya açılamadı"}"
+            }
         }
     }
 
@@ -153,7 +179,7 @@ fun BeforeAfterProApp() {
                             onSelect = { selectedIndex = it },
                             onPick = {
                                 selectedIndex = it
-                                picker.launch("image/*")
+                                picker.launch(arrayOf("image/*"))
                             }
                         )
                     }
@@ -169,9 +195,63 @@ fun BeforeAfterProApp() {
                                 fontSize = 17.sp
                             )
                             Button(
-                                onClick = { picker.launch("image/*") },
+                                onClick = { picker.launch(arrayOf("image/*")) },
                                 modifier = Modifier.fillMaxWidth()
                             ) { Text(if (selected.uri == null) "FOTOĞRAF SEÇ" else "FOTOĞRAFI DEĞİŞTİR") }
+
+                            if (selected.uri != null) {
+                                val editorBitmap = remember(selected.uri) {
+                                    decodeScaledBitmap12(context, selected.uri, 1600)
+                                }
+                                val transformState = rememberTransformableState { zoomChange, panChange, rotationChange ->
+                                    val cur = slots[selectedIndex]
+                                    slots[selectedIndex] = cur.copy(
+                                        scale = (cur.scale * zoomChange).coerceIn(1f, 4f),
+                                        offsetX = (cur.offsetX + panChange.x / 450f).coerceIn(-1f, 1f),
+                                        offsetY = (cur.offsetY + panChange.y / 450f).coerceIn(-1f, 1f),
+                                        rotation = (cur.rotation + rotationChange).coerceIn(-180f, 180f)
+                                    )
+                                    result = null
+                                }
+
+                                if (editorBitmap != null) {
+                                    Text(
+                                        "Fotoğrafın üzerinde iki parmakla yakınlaştır • sürükle • döndür",
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Box(
+                                        Modifier.fillMaxWidth().height(360.dp)
+                                            .clip(MaterialTheme.shapes.medium)
+                                            .background(Color(0xFF111827)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Image(
+                                            bitmap = editorBitmap.asImageBitmap(),
+                                            contentDescription = "Düzenlenen fotoğraf",
+                                            modifier = Modifier.fillMaxSize()
+                                                .graphicsLayer(
+                                                    scaleX = selected.scale,
+                                                    scaleY = selected.scale,
+                                                    translationX = selected.offsetX * 180f,
+                                                    translationY = selected.offsetY * 180f,
+                                                    rotationZ = selected.rotation
+                                                )
+                                                .transformable(transformState),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
+                                } else {
+                                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE4E6))) {
+                                        Text(
+                                            "Fotoğraf okunamadı. FOTOĞRAFI DEĞİŞTİR ile yeniden seç.",
+                                            modifier = Modifier.padding(12.dp),
+                                            color = Color(0xFFB91C1C),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            }
 
                             Text("Yakınlaştırma: ${"%.1f".format(Locale.US, selected.scale)}x", fontSize = 12.sp)
                             Slider(
@@ -431,8 +511,8 @@ private fun PhotoGrid12(
                                 val bmp = remember(slot.uri) { decodeScaledBitmap12(context, slot.uri, 900) }
                                 if (bmp != null) {
                                     Box(
-                                        Modifier.fillMaxWidth().height(145.dp).clip(MaterialTheme.shapes.small)
-                                            .background(Color(0xFFE5E7EB)),
+                                        Modifier.fillMaxWidth().height(180.dp).clip(MaterialTheme.shapes.small)
+                                            .background(Color(0xFF111827)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Image(
@@ -441,12 +521,20 @@ private fun PhotoGrid12(
                                             modifier = Modifier.fillMaxSize().graphicsLayer(
                                                 scaleX = slot.scale,
                                                 scaleY = slot.scale,
-                                                translationX = slot.offsetX * 70f,
-                                                translationY = slot.offsetY * 70f,
+                                                translationX = slot.offsetX * 85f,
+                                                translationY = slot.offsetY * 85f,
                                                 rotationZ = slot.rotation
                                             ),
                                             contentScale = ContentScale.Crop
                                         )
+                                    }
+                                } else {
+                                    Box(
+                                        Modifier.fillMaxWidth().height(180.dp)
+                                            .background(Color(0xFFFFE4E6)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("Fotoğraf açılamadı\nTekrar seç", color = Color(0xFFB91C1C), fontWeight = FontWeight.Bold)
                                     }
                                 }
                                 Text(slot.dateText.ifBlank { "Tarih yok" }, fontSize = 10.sp)
@@ -508,18 +596,43 @@ private fun detectPhotoDate(context: Context, uri: Uri): String {
 }
 
 private fun decodeScaledBitmap12(context: Context, uri: Uri, maxSide: Int): Bitmap? {
-    val resolver = context.contentResolver
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) } ?: return null
-    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
-    var sample = 1
-    val longest = max(bounds.outWidth, bounds.outHeight)
-    while (longest / sample > maxSide * 2) sample *= 2
-    val opts = BitmapFactory.Options().apply {
-        inSampleSize = sample
-        inPreferredConfig = Bitmap.Config.ARGB_8888
+    return try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val source = ImageDecoder.createSource(context.contentResolver, uri)
+            ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+                val w = info.size.width
+                val h = info.size.height
+                val longest = max(w, h).coerceAtLeast(1)
+                if (longest > maxSide) {
+                    val ratio = maxSide.toFloat() / longest.toFloat()
+                    decoder.setTargetSize(
+                        (w * ratio).toInt().coerceAtLeast(1),
+                        (h * ratio).toInt().coerceAtLeast(1)
+                    )
+                }
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            }
+        } else {
+            val resolver = context.contentResolver
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) } ?: return null
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+            var sample = 1
+            val longest = max(bounds.outWidth, bounds.outHeight)
+            while (longest / sample > maxSide * 2) sample *= 2
+            val opts = BitmapFactory.Options().apply {
+                inSampleSize = sample
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+        }
+    } catch (_: Exception) {
+        try {
+            context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
+        } catch (_: Exception) {
+            null
+        }
     }
-    return resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
 }
 
 private fun createComposite12(
