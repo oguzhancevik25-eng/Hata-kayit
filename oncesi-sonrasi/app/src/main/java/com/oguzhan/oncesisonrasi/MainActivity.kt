@@ -441,29 +441,31 @@ private fun drawCover(canvas: Canvas, bitmap: Bitmap, dst: Rect) {
     canvas.drawBitmap(bitmap, src, dst, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
 }
 
-private fun saveToGallery(context: Context, bitmap: Bitmap): Uri? {\n    return try {
-    val name = "Oncesi_Sonrasi_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".jpg"
-    val values = ContentValues().apply {
-        put(MediaStore.Images.Media.DISPLAY_NAME, name)
-        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/OncesiSonrasi")
-            put(MediaStore.Images.Media.IS_PENDING, 1)
+private fun saveToGallery(context: Context, bitmap: Bitmap): Uri? {
+    return try {
+        val name = "Oncesi_Sonrasi_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".jpg"
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, name)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/OncesiSonrasi")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
         }
+        val resolver = context.contentResolver
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return null
+        resolver.openOutputStream(uri)?.use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 94, out)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.clear()
+            values.put(MediaStore.Images.Media.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+        }
+        uri
+    } catch (_: Exception) {
+        null
     }
-    val resolver = context.contentResolver
-    val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return null
-    resolver.openOutputStream(uri)?.use { out ->
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 94, out)
-    }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        values.clear()
-        values.put(MediaStore.Images.Media.IS_PENDING, 0)
-        resolver.update(uri, values, null, null)
-    }
-    uri
-} catch (_: Exception) {
-    null
 }
 
 private fun saveForShare(context: Context, bitmap: Bitmap): Uri? = try {
