@@ -441,7 +441,7 @@ private fun drawCover(canvas: Canvas, bitmap: Bitmap, dst: Rect) {
     canvas.drawBitmap(bitmap, src, dst, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
 }
 
-private fun saveToGallery(context: Context, bitmap: Bitmap): Uri? = try {
+private fun saveToGallery(context: Context, bitmap: Bitmap): Uri? {\n    return try {
     val name = "Oncesi_Sonrasi_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".jpg"
     val values = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, name)
