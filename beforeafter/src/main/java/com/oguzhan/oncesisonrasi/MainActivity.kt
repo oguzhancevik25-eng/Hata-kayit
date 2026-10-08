@@ -193,7 +193,7 @@ private fun createSideBySide(before: Bitmap, after: Bitmap, leftText: String, ri
     val halfW = 1000
     val out = Bitmap.createBitmap(halfW * 2 + gap, targetH + header, Bitmap.Config.ARGB_8888)
     val c = Canvas(out)
-    c.drawColor(Color.WHITE.hashCode())
+    c.drawColor(android.graphics.Color.WHITE)
     drawCover(c, before, Rect(0, header, halfW, header + targetH))
     drawCover(c, after, Rect(halfW + gap, header, halfW * 2 + gap, header + targetH))
     drawLabel(c, leftText, halfW / 2f, 76f)
@@ -208,7 +208,7 @@ private fun createVertical(before: Bitmap, after: Bitmap, topText: String, botto
     val gap = 12
     val out = Bitmap.createBitmap(targetW, header + photoH + gap + header + photoH, Bitmap.Config.ARGB_8888)
     val c = Canvas(out)
-    c.drawColor(Color.WHITE.hashCode())
+    c.drawColor(android.graphics.Color.WHITE)
     drawLabel(c, topText, targetW / 2f, 72f)
     drawCover(c, before, Rect(0, header, targetW, header + photoH))
     val secondHeaderTop = header + photoH + gap
