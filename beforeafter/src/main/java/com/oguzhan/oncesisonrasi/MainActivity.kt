@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -365,7 +366,7 @@ fun BeforeAfterProApp() {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Switch(checked = showLogo, onCheckedChange = { showLogo = it; result = null })
                             Spacer(Modifier.width(8.dp))
-                            Text("Toyota Boshoku logosunu göster")
+                            Text("Toyota Boshoku Türkiye logosunu göster")
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Switch(checked = showDate, onCheckedChange = { showDate = it; result = null })
@@ -474,9 +475,14 @@ private fun BrandHeader12() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("TB", color = Color(0xFFD71920), fontSize = 30.sp, fontWeight = FontWeight.Black)
+        Image(
+            painter = painterResource(id = R.drawable.toyota_boshoku_symbol),
+            contentDescription = "Toyota Boshoku Türkiye logosu",
+            modifier = Modifier.width(72.dp).height(42.dp),
+            contentScale = ContentScale.Fit
+        )
         Column {
-            Text("TOYOTA BOSHOKU", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            Text("TOYOTA BOSHOKU TÜRKİYE", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             Text("Öncesi / Sonrası Görsel Hazırlama", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -668,7 +674,8 @@ private fun createComposite12(
     val canvas = Canvas(output)
     canvas.drawColor(android.graphics.Color.WHITE)
 
-    drawGlobalHeader12(canvas, width, globalTitle, showLogo)
+    val brandLogo = BitmapFactory.decodeResource(context.resources, R.drawable.toyota_boshoku_symbol)
+    drawGlobalHeader12(canvas, width, globalTitle, showLogo, brandLogo)
 
     slots.forEachIndexed { idx, slot ->
         val row = idx / columns
@@ -680,21 +687,28 @@ private fun createComposite12(
             ?: error("Fotoğraf ${idx + 1} okunamadı")
         drawAdjustedCover12(canvas, bmp, rect, slot.scale, slot.offsetX, slot.offsetY, slot.rotation)
         bmp.recycle()
-        drawInfo12(canvas, left, top + photoH, cellW, infoH, slot, showDate)
+        drawInfo12(canvas, left, top + photoH, cellW, infoH, slot, showDate, showLogo, brandLogo)
     }
+    brandLogo?.recycle()
 
     return output
 }
 
-private fun drawGlobalHeader12(canvas: Canvas, width: Int, title: String, showLogo: Boolean) {
-    val red = android.graphics.Color.rgb(215, 25, 32)
-    if (showLogo) {
-        drawTbMark12(canvas, 55f, 53f, 78f, red)
+private fun drawGlobalHeader12(
+    canvas: Canvas,
+    width: Int,
+    title: String,
+    showLogo: Boolean,
+    logo: Bitmap?
+) {
+    if (showLogo && logo != null) {
+        val logoRect = Rect(45, 34, 145, 104)
+        canvas.drawBitmap(logo, null, logoRect, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.BLACK
-            textSize = 34f
+            textSize = 32f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        }.let { canvas.drawText("TOYOTA BOSHOKU", 150f, 83f, it) }
+        }.let { canvas.drawText("TOYOTA BOSHOKU TÜRKİYE", 165f, 82f, it) }
     }
     Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.rgb(17,24,39)
@@ -706,22 +720,6 @@ private fun drawGlobalHeader12(canvas: Canvas, width: Int, title: String, showLo
         color = android.graphics.Color.rgb(229,231,235)
         strokeWidth = 3f
     }.let { canvas.drawLine(35f, 122f, width - 35f, 122f, it) }
-}
-
-private fun drawTbMark12(canvas: Canvas, x: Float, y: Float, size: Float, color: Int) {
-    val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color; style = Paint.Style.FILL }
-    val path1 = Path().apply {
-        moveTo(x, y)
-        lineTo(x + size * .62f, y)
-        lineTo(x + size * .36f, y + size * .32f)
-        lineTo(x + size * .18f, y + size * .95f)
-        lineTo(x + size * .04f, y + size * .78f)
-        lineTo(x + size * .13f, y + size * .28f)
-        close()
-    }
-    canvas.drawPath(path1, p)
-    canvas.drawOval(RectF(x + size*.52f, y + size*.03f, x + size, y + size*.42f), p)
-    canvas.drawOval(RectF(x + size*.43f, y + size*.49f, x + size*.91f, y + size*.91f), p)
 }
 
 private fun drawAdjustedCover12(
@@ -759,23 +757,34 @@ private fun drawInfo12(
     width: Int,
     height: Int,
     slot: PhotoSlot12,
-    showDate: Boolean
+    showDate: Boolean,
+    showLogo: Boolean,
+    logo: Bitmap?
 ) {
-    val red = android.graphics.Color.rgb(215,25,32)
-    drawTbMark12(canvas, left + 14f, top + 15f, 45f, red)
+    var labelX = left + 14f
+    if (showLogo && logo != null) {
+        val logoRect = Rect(left + 12, top + 10, left + 68, top + 50)
+        canvas.drawBitmap(logo, null, logoRect, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.BLACK
+            textSize = 16f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }.let { canvas.drawText("TOYOTA BOSHOKU TÜRKİYE", left + 76f, top + 36f, it) }
+        labelX = left + 14f
+    }
 
     Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.rgb(17,24,39)
         textSize = 28f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-    }.let { canvas.drawText(labelForIndex(slot.index), left + 70f, top + 48f, it) }
+    }.let { canvas.drawText(labelForIndex(slot.index), labelX, top + 82f, it) }
 
     if (showDate) {
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.rgb(75,85,99)
             textSize = 24f
             textAlign = Paint.Align.RIGHT
-        }.let { canvas.drawText(slot.dateText, left + width - 12f, top + 46f, it) }
+        }.let { canvas.drawText(slot.dateText, left + width - 12f, top + 82f, it) }
     }
 
     Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -783,7 +792,7 @@ private fun drawInfo12(
         textSize = 23f
     }.let {
         val text = slot.caption.ifBlank { " " }
-        canvas.drawText(text.take(70), left + 14f, top + 88f, it)
+        canvas.drawText(text.take(70), left + 150f, top + 82f, it)
     }
 }
 
