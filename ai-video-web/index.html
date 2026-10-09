@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <meta name="theme-color" content="#08101f"/>
 <link rel="manifest" href="./manifest.webmanifest"/>
-<title>AI Video Studio Mobile v2</title>
+<title>AI Video Studio Mobile v3</title>
 <style>
 :root{--bg:#08101f;--card:#111a2d;--text:#f8fafc;--muted:#94a3b8;--line:#273554;--blue:#2563eb;--green:#16a34a;--red:#dc2626}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#08101f,#0f172a);color:var(--text);min-height:100vh}
@@ -32,7 +32,7 @@ footer{text-align:center;color:#64748b;font-size:11px;padding:22px 0}
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><div class="logo">AI</div><div><h1>AI Video Studio Mobile v2</h1><p>Telefon • prompt • araştırma • ComfyUI video motoru</p></div></div>
+    <div class="brand"><div class="logo">AI</div><div><h1>AI Video Studio Mobile v2</h1><p>Telefon • ücretsiz LTX video • araştırma • ComfyUI</p></div></div>
     <div class="tabs">
       <button class="tab active" data-tab="chat">Sohbet</button>
       <button class="tab" data-tab="create">Video</button>
@@ -107,8 +107,23 @@ footer{text-align:center;color:#64748b;font-size:11px;padding:22px 0}
 
   <section id="engine" class="panel">
     <div class="card">
-      <div class="title">Gerçek Video Motoru • ComfyUI</div>
-      <div class="sub">ComfyUI sunucusunu telefonla aynı ağda açarsan bu sayfa gerçek üretim işi gönderebilir. Sunucuyu CORS açık çalıştırman gerekir.</div>
+      <div class="title">Ücretsiz Gerçek AI Video • LTX ZeroGPU</div>
+      <div class="sub">Bu mod doğrudan herkese açık LTX-Video ZeroGPU alanına bağlanır. API anahtarı istemez; ücretsiz ortak kuyruk kullanır. Tek üretim en fazla 8.5 saniyedir ve yoğunlukta sıra bekleyebilir.</div>
+      <label>Ücretsiz LTX klip süresi</label>
+      <select id="hfDuration"><option value="3">3 sn</option><option value="5">5 sn</option><option value="8" selected>8 sn</option></select>
+      <div class="grid2">
+        <div><label>Genişlik</label><select id="hfWidth"><option>512</option><option selected>704</option><option>768</option></select></div>
+        <div><label>Yükseklik</label><select id="hfHeight"><option selected>512</option><option>704</option><option>768</option></select></div>
+      </div>
+      <button class="btn green" id="hfGenerateBtn">ÜCRETSİZ LTX VİDEO ÜRET</button>
+      <div class="bar"><span id="hfProgressBar"></span></div>
+      <div class="status" id="hfStatus">Ücretsiz LTX motoru hazır.</div>
+      <div id="hfOutputs"></div>
+    </div>
+
+    <div class="card">
+      <div class="title">Kendi Video Motorun • ComfyUI</div>
+      <div class="sub">Bilgisayarındaki ComfyUI sunucusunu telefonla aynı ağda açarsan kendi GPU'nla üretim yapabilirsin. Sunucuyu CORS açık çalıştırman gerekir.</div>
       <label>ComfyUI adresi</label><input id="endpoint" placeholder="http://192.168.1.25:8188"/>
       <button class="btn dark" id="testBtn">BAĞLANTIYI TEST ET</button>
       <div class="status" id="engineStatus">Henüz motor bağlanmadı.</div>
@@ -137,7 +152,7 @@ footer{text-align:center;color:#64748b;font-size:11px;padding:22px 0}
     </div>
   </section>
 
-  <footer>AI Video Studio Mobile v2 • proje verileri yerelde saklanır</footer>
+  <footer>AI Video Studio Mobile v3 • proje verileri yerelde saklanır</footer>
 </div>
 
 <script>
@@ -200,6 +215,51 @@ $('#researchBtn').onclick=async()=>{
   el.innerHTML=items.slice(0,8).map(x=>`<div class="researchItem"><b>${esc(x.title)}</b><p>${x.snippet}</p><a class="outputLink" target="_blank" href="https://tr.wikipedia.org/wiki/${encodeURIComponent(x.title.replaceAll(' ','_'))}">Kaynağı aç</a></div>`).join('')||'<div class="status">Sonuç bulunamadı.</div>';
  }catch(e){el.innerHTML='<div class="status err">Araştırma hatası: '+esc(e.message)+'</div>'}
 };
+
+
+const HF_SPACE='https://lightricks-ltx-video-distilled.hf.space';
+function parseHfSse(raw){
+ const blocks=raw.split('\n\n').filter(Boolean).reverse();
+ for(const block of blocks){
+  const em=block.match(/^event:\s*(\S+)/m), dm=block.match(/^data:\s*(.+)$/m);
+  if(!em||!dm) continue;
+  if(em[1]==='error') throw Error('Model hatası: '+dm[1]);
+  if(em[1]==='complete'){
+    const payload=JSON.parse(dm[1]);
+    const first=payload?.[0];
+    const url=first?.video?.url || first?.url || first?.path;
+    if(!url) throw Error('Video URL dönmedi');
+    return {url,seed:payload?.[1]};
+  }
+ }
+ throw Error('Üretim tamamlanamadı');
+}
+async function generateFreeLtx(){
+ const status=$('#hfStatus'), bar=$('#hfProgressBar'), out=$('#hfOutputs');
+ let prompt=$('#proPrompt').value.trim();
+ if(!prompt){prompt=buildPrompt();if(!prompt){$('.tab[data-tab="create"]').click();return}}
+ const neg='worst quality, blurry, distorted, watermark, deformed hands, extra fingers, unstable face';
+ const width=Number($('#hfWidth').value),height=Number($('#hfHeight').value),duration=Math.min(8.5,Number($('#hfDuration').value)||5);
+ try{
+  status.textContent='Ücretsiz LTX kuyruğuna gönderiliyor...';status.className='status';bar.style.width='8%';out.innerHTML='';
+  const data=[prompt,neg,'','',height,width,'text-to-video',duration,9,42,true,1,true];
+  const submit=await fetch(HF_SPACE+'/gradio_api/call/text_to_video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});
+  if(!submit.ok) throw Error('Kuyruğa eklenemedi HTTP '+submit.status);
+  const sj=await submit.json(); if(!sj.event_id) throw Error('İş numarası alınamadı');
+  status.textContent='✓ İş sırada. Ücretsiz GPU bekleniyor...';status.className='status ok';bar.style.width='20%';
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),5*60*1000);
+  const result=await fetch(HF_SPACE+'/gradio_api/call/text_to_video/'+encodeURIComponent(sj.event_id),{signal:controller.signal});
+  clearTimeout(timer);
+  if(!result.ok) throw Error('Sonuç bağlantısı kesildi HTTP '+result.status);
+  bar.style.width='75%';const raw=await result.text();const parsed=parseHfSse(raw);bar.style.width='100%';
+  status.textContent='✓ Gerçek AI video hazır'+(parsed.seed!=null?' • seed '+parsed.seed:'');status.className='status ok';
+  const safe=String(parsed.url).replace(/"/g,'&quot;');
+  out.innerHTML='<div class="result"><video controls playsinline style="width:100%;border-radius:12px" src="'+safe+'"></video><a class="outputLink" target="_blank" href="'+safe+'">Videoyu aç / indir</a></div>';
+ }catch(e){
+  bar.style.width='0%';status.textContent='Ücretsiz LTX hatası: '+(e.name==='AbortError'?'5 dakika içinde tamamlanmadı. Daha sonra tekrar dene.':e.message);status.className='status err';
+ }
+}
+$('#hfGenerateBtn').onclick=generateFreeLtx;
 
 $('#endpoint').value=localStorage.getItem('comfy_endpoint')||'';
 $('#promptNode').value=localStorage.getItem('comfy_prompt_node')||'';
@@ -265,7 +325,7 @@ async function generate(){
   $('#outputs').innerHTML=outs.map(o=>{const u=outputUrl(base,o),ext=o.filename.split('.').pop().toLowerCase();if(['mp4','webm','mov','mkv'].includes(ext))return `<div class="result"><video controls playsinline style="width:100%" src="${u}"></video><a class="outputLink" target="_blank" href="${u}">Videoyu aç / indir</a></div>`;if(['png','jpg','jpeg','webp','gif'].includes(ext))return `<div class="result"><img style="width:100%;border-radius:12px" src="${u}"><a class="outputLink" target="_blank" href="${u}">Dosyayı aç</a></div>`;return `<a class="outputLink" target="_blank" href="${u}">${esc(o.filename)}</a>`}).join('');
  }catch(e){jobStatus('Üretim hatası: '+e.message,'err');$('#progressBar').style.width='0%'}
 }
-$('#generateBtn').onclick=generate;$('#sendEngineBtn').onclick=()=>{$('.tab[data-tab="engine"]').click();generate()};
+$('#generateBtn').onclick=generate;$('#sendEngineBtn').onclick=()=>{$('.tab[data-tab="engine"]').click();generateFreeLtx()};
 $('#interruptBtn').onclick=async()=>{const base=$('#endpoint').value.trim().replace(/\/$/,'');if(!base)return;try{await fetch(base+'/interrupt',{method:'POST'});jobStatus('Durdurma komutu gönderildi.')}catch(e){jobStatus('Durdurulamadı: '+e.message,'err')}};
 
 let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('#installBtn').disabled=false});$('#installBtn').onclick=async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('#installBtn').disabled=true};
