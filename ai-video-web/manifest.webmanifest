@@ -1,0 +1,10 @@
+{
+  "name":"AI Video Studio Mobile",
+  "short_name":"AI Video",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#08101f",
+  "theme_color":"#08101f",
+  "description":"Mobil AI video prompt, araştırma ve ComfyUI üretim uygulaması"
+}
