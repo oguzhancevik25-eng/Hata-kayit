@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#111827"/>
+<title>AI Video Studio Mobile</title>
+<style>
+:root{--bg:#0b1020;--card:#121a2d;--card2:#17233b;--text:#f8fafc;--muted:#94a3b8;--red:#ef4444;--blue:#3b82f6;--green:#22c55e;--line:#273554}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#08101f,#0f172a);color:var(--text);min-height:100vh}
+.app{max-width:720px;margin:0 auto;padding:env(safe-area-inset-top) 14px calc(28px + env(safe-area-inset-bottom))}
+.top{position:sticky;top:0;z-index:8;background:rgba(8,16,31,.88);backdrop-filter:blur(12px);padding:14px 4px 10px;border-bottom:1px solid rgba(255,255,255,.06)}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#2563eb);display:grid;place-items:center;font-weight:900}.brand h1{font-size:19px;margin:0}.brand p{font-size:12px;color:var(--muted);margin:2px 0 0}
+.tabs{display:flex;gap:8px;overflow:auto;padding:12px 0 2px}.tab{white-space:nowrap;border:1px solid var(--line);background:#0f172a;color:#cbd5e1;border-radius:999px;padding:9px 12px;font-weight:700}.tab.active{background:#2563eb;border-color:#2563eb;color:white}
+.panel{display:none}.panel.active{display:block}
+.card{background:linear-gradient(180deg,var(--card),#0f172a);border:1px solid var(--line);border-radius:20px;padding:16px;margin-top:14px;box-shadow:0 14px 40px rgba(0,0,0,.18)}
+.title{font-size:18px;font-weight:850;margin-bottom:6px}.sub{color:var(--muted);font-size:13px;line-height:1.5}
+label{display:block;font-size:12px;color:#cbd5e1;margin:14px 0 6px;font-weight:700}
+textarea,input,select{width:100%;border:1px solid #334155;background:#0b1220;color:white;border-radius:14px;padding:13px;font:inherit;outline:none}textarea{min-height:120px;resize:vertical}textarea:focus,input:focus,select:focus{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid #334155;background:#0b1220;color:#cbd5e1;border-radius:999px;padding:9px 11px;font-weight:700;font-size:12px}.chip.on{background:#1d4ed8;color:white;border-color:#1d4ed8}
+.btn{width:100%;border:0;border-radius:15px;padding:14px 16px;font-weight:850;font-size:15px;color:white;margin-top:10px;background:#2563eb}.btn.green{background:#16a34a}.btn.red{background:#dc2626}.btn.dark{background:#1f2937;border:1px solid #334155}.btn:disabled{opacity:.5}
+.preview{width:100%;aspect-ratio:16/9;border-radius:16px;background:#020617;border:1px dashed #475569;display:grid;place-items:center;overflow:hidden;position:relative}.preview img{width:100%;height:100%;object-fit:cover}.preview .empty{color:#64748b;text-align:center;padding:20px}
+.scene{padding:12px;border:1px solid #2c3a58;border-radius:14px;background:#0a1220;margin-top:8px}.scene b{font-size:12px;color:#93c5fd}.scene p{font-size:13px;color:#e2e8f0;line-height:1.45;margin:6px 0 0}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#172554;color:#bfdbfe;font-size:11px;font-weight:800;margin-right:6px;margin-top:6px}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}
+.status{padding:12px;border-radius:14px;margin-top:10px;background:#0b1220;border:1px solid #334155;color:#cbd5e1;font-size:13px}.status.ok{border-color:#166534;color:#bbf7d0}.status.err{border-color:#7f1d1d;color:#fecaca}
+.project{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #26324b;padding:12px 0}.project:last-child{border-bottom:0}.project small{display:block;color:#94a3b8;margin-top:3px}
+.mini{width:auto;padding:8px 10px;margin:0;font-size:12px}.hint{padding:12px;border-left:3px solid #3b82f6;background:#0b1220;color:#bfdbfe;border-radius:10px;font-size:12px;line-height:1.45;margin-top:10px}
+footer{text-align:center;color:#64748b;font-size:11px;padding:24px 0}
+@media(max-width:480px){.grid2{grid-template-columns:1fr}.app{padding-left:10px;padding-right:10px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><div class="logo">AI</div><div><h1>AI Video Studio Mobile</h1><p>Prompt • sahne planı • referans görsel • video motoru</p></div></div>
+    <div class="tabs">
+      <button class="tab active" data-tab="create">Oluştur</button>
+      <button class="tab" data-tab="scenes">Sahneler</button>
+      <button class="tab" data-tab="projects">Projeler</button>
+      <button class="tab" data-tab="engine">Video Motoru</button>
+    </div>
+  </div>
+
+  <section id="create" class="panel active">
+    <div class="card">
+      <div class="title">Ne videosu istiyorsun?</div>
+      <div class="sub">Türkçe yaz. Uygulama bunu sinematik video promptuna dönüştürür ve sahnelere böler.</div>
+      <label>Video fikri / prompt</label>
+      <textarea id="idea" placeholder="Örnek: Gerçek bir otomotiv fabrikasında operatör enjeksiyon makinesinde hatalı parçayı fark ediyor, andona basıyor, amir geliyor..."></textarea>
+      <div class="grid2">
+        <div><label>Stil</label><select id="style">
+          <option>Gerçekçi sinematik</option><option>Belgesel</option><option>Reklam filmi</option><option>Anime</option><option>3D animasyon</option><option>Drone / epik</option>
+        </select></div>
+        <div><label>Video oranı</label><select id="ratio">
+          <option value="9:16">9:16 Dikey</option><option value="16:9">16:9 Yatay</option><option value="1:1">1:1 Kare</option>
+        </select></div>
+      </div>
+      <div class="grid2">
+        <div><label>Toplam süre</label><select id="duration"><option>8</option><option>15</option><option selected>30</option><option>60</option></select></div>
+        <div><label>Sahne süresi</label><select id="sceneDuration"><option>5</option><option selected>8</option><option>10</option></select></div>
+      </div>
+      <label>Kamera</label>
+      <div class="chips" id="cameraChips">
+        <button class="chip on">Sinematik</button><button class="chip">Yakın plan</button><button class="chip">Takip çekimi</button><button class="chip">Drone</button><button class="chip">Sabit kamera</button>
+      </div>
+      <label>Referans fotoğrafı (isteğe bağlı)</label>
+      <input id="imageInput" type="file" accept="image/*"/>
+      <div class="preview" id="preview"><div class="empty">Referans görsel henüz eklenmedi</div></div>
+      <button class="btn" id="enhanceBtn">PROMPTU PROFESYONELLEŞTİR</button>
+      <button class="btn green" id="sceneBtn">SAHNELERE BÖL</button>
+      <div class="status" id="status">Hazır.</div>
+    </div>
+
+    <div class="card">
+      <div class="title">Profesyonel video promptu</div>
+      <textarea id="proPrompt" placeholder="Burada geliştirilmiş prompt oluşacak..."></textarea>
+      <button class="btn dark" id="copyBtn">PROMPTU KOPYALA</button>
+      <button class="btn green" id="saveBtn">PROJEYİ KAYDET</button>
+    </div>
+  </section>
+
+  <section id="scenes" class="panel">
+    <div class="card">
+      <div class="title">Sahne Planı</div>
+      <div class="sub">Uzun videoyu kısa üretim parçalarına böler. Her sahnenin promptunu ayrı kullanabilirsin.</div>
+      <div id="sceneList"><div class="hint">Önce “Sahnelere Böl” butonuna bas.</div></div>
+      <button class="btn dark" id="copyScenesBtn">TÜM SAHNELERİ KOPYALA</button>
+    </div>
+  </section>
+
+  <section id="projects" class="panel">
+    <div class="card">
+      <div class="title">Kayıtlı Projeler</div>
+      <div class="sub">Projeler telefonunun tarayıcısında saklanır.</div>
+      <div id="projectsList"></div>
+      <button class="btn red" id="clearProjectsBtn">TÜM PROJELERİ SİL</button>
+    </div>
+  </section>
+
+  <section id="engine" class="panel">
+    <div class="card">
+      <div class="title">Video Motoru</div>
+      <div class="sub">Telefon tek başına büyük yapay zekâ video modellerini ücretsiz ve sınırsız çalıştıramaz. Bu ekran hazır; yerel veya kendi sunucunu bağlayınca üretim butonu aktif olur.</div>
+      <label>Motor türü</label>
+      <select id="engineType">
+        <option value="demo">Telefon içi Demo (AI değil)</option>
+        <option value="local">Yerel AI Sunucusu</option>
+        <option value="custom">Özel API</option>
+      </select>
+      <label>Sunucu adresi</label>
+      <input id="endpoint" placeholder="Örnek: http://192.168.1.25:8188"/>
+      <button class="btn dark" id="testBtn">BAĞLANTIYI TEST ET</button>
+      <button class="btn green" id="generateBtn">VİDEO ÜRETİMİNİ BAŞLAT</button>
+      <div class="status" id="engineStatus">Demo modu açık. AI video üretimi için bir motor bağlanmalı.</div>
+      <div class="hint">Bu web uygulaması şu anda telefonda prompt hazırlama, sahne planlama, proje saklama ve referans görsel yönetimini çalıştırır. Gerçek text-to-video üretimi için daha sonra yerel LTX/ComfyUI veya başka bir video API'si bağlanabilir.</div>
+    </div>
+  </section>
+  <footer>AI Video Studio Mobile • yerel proje verisi telefonunda tutulur</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const state={scenes:[],image:null};
+$$('.tab').forEach(b=>b.onclick=()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); $$('.panel').forEach(x=>x.classList.remove('active')); b.classList.add('active'); $('#'+b.dataset.tab).classList.add('active'); if(b.dataset.tab==='projects')renderProjects();});
+$$('.chip').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
+$('#imageInput').onchange=e=>{const f=e.target.files?.[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{state.image=r.result; $('#preview').innerHTML='<img src="'+r.result+'">';}; r.readAsDataURL(f);};
+function buildPrompt(){
+ const idea=$('#idea').value.trim(); if(!idea){setStatus('Önce video fikrini yaz.','err');return ''}
+ const style=$('#style').value,ratio=$('#ratio').value,duration=$('#duration').value;
+ const cams=$$('#cameraChips .on').map(x=>x.textContent).join(', ');
+ const p=`${idea}
+
+Görsel stil: ${style}. Kamera dili: ${cams||'sinematik doğal kamera'}. Kadraj: ${ratio}. Toplam hedef süre: ${duration} saniye.
+Gerçekçi fizik, doğal insan hareketleri, tutarlı karakter görünümü, doğru eller ve yüzler, dengeli ışık, gerçekçi gölgeler, sahneler arası görsel devamlılık, profesyonel renk düzenleme, yüksek detay, akıcı kamera hareketi.
+İstenmeyenler: bozuk anatomi, ekstra parmak, eriyen yüzler, yazı bozulması, titreme, kare atlama, anlamsız nesne dönüşümü, düşük çözünürlük.`;
+ $('#proPrompt').value=p; setStatus('✓ Profesyonel prompt hazır.','ok'); return p;
+}
+$('#enhanceBtn').onclick=buildPrompt;
+function makeScenes(){
+ const p=$('#proPrompt').value.trim()||buildPrompt(); if(!p)return;
+ const total=+$('#duration').value, each=+$('#sceneDuration').value, count=Math.max(1,Math.ceil(total/each));
+ const idea=$('#idea').value.trim(), style=$('#style').value, ratio=$('#ratio').value;
+ state.scenes=Array.from({length:count},(_,i)=>({n:i+1,seconds:i===count-1?Math.max(1,total-each*(count-1)):each,prompt:`Sahne ${i+1}/${count}. ${idea} Bu sahnede hikâyenin ${i===0?'başlangıcı':i===count-1?'sonucu':'devamı'} gösterilsin. ${style}, ${ratio}, tutarlı karakterler ve mekan, akıcı sinematik kamera, doğal hareket, yüksek detay. Süre yaklaşık ${i===count-1?Math.max(1,total-each*(count-1)):each} saniye.`}));
+ renderScenes(); $('.tab[data-tab="scenes"]').click(); setStatus('✓ '+count+' sahnelik plan hazır.','ok');
+}
+$('#sceneBtn').onclick=makeScenes;
+function renderScenes(){const el=$('#sceneList'); el.innerHTML=state.scenes.length?state.scenes.map(s=>`<div class="scene"><b>SAHNE ${s.n} • ${s.seconds} sn</b><p>${escapeHtml(s.prompt)}</p><button class="btn mini dark" onclick="navigator.clipboard.writeText(${JSON.stringify(s.prompt)})">KOPYALA</button></div>`).join(''):'<div class="hint">Sahne yok.</div>';}
+function escapeHtml(x){return x.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+$('#copyBtn').onclick=()=>navigator.clipboard.writeText($('#proPrompt').value||'');
+$('#copyScenesBtn').onclick=()=>navigator.clipboard.writeText(state.scenes.map(s=>`Sahne ${s.n}: ${s.prompt}`).join('\n\n'));
+function setStatus(t,cls=''){const e=$('#status');e.textContent=t;e.className='status '+cls}
+$('#saveBtn').onclick=()=>{const projects=JSON.parse(localStorage.getItem('aivideo_projects')||'[]');projects.unshift({id:Date.now(),title:($('#idea').value.trim().slice(0,50)||'Adsız Proje'),idea:$('#idea').value,prompt:$('#proPrompt').value,style:$('#style').value,ratio:$('#ratio').value,duration:$('#duration').value,scenes:state.scenes,date:new Date().toLocaleString('tr-TR')});localStorage.setItem('aivideo_projects',JSON.stringify(projects.slice(0,50)));setStatus('✓ Proje telefona kaydedildi.','ok')};
+function renderProjects(){const ps=JSON.parse(localStorage.getItem('aivideo_projects')||'[]');$('#projectsList').innerHTML=ps.length?ps.map(p=>`<div class="project"><div><b>${escapeHtml(p.title)}</b><small>${p.date} • ${p.duration} sn • ${p.ratio}</small></div><button class="btn mini dark" onclick="loadProject(${p.id})">AÇ</button></div>`).join(''):'<div class="hint">Henüz kayıtlı proje yok.</div>'}
+window.loadProject=id=>{const ps=JSON.parse(localStorage.getItem('aivideo_projects')||'[]');const p=ps.find(x=>x.id===id);if(!p)return;$('#idea').value=p.idea||'';$('#proPrompt').value=p.prompt||'';$('#style').value=p.style||'Gerçekçi sinematik';$('#ratio').value=p.ratio||'9:16';$('#duration').value=p.duration||'30';state.scenes=p.scenes||[];renderScenes();$('.tab[data-tab="create"]').click();setStatus('✓ Proje açıldı.','ok')};
+$('#clearProjectsBtn').onclick=()=>{if(confirm('Tüm projeler silinsin mi?')){localStorage.removeItem('aivideo_projects');renderProjects()}};
+$('#testBtn').onclick=async()=>{const type=$('#engineType').value,url=$('#endpoint').value.trim(),st=$('#engineStatus');if(type==='demo'){st.textContent='Demo modu hazır. Bu mod gerçek AI üretmez.';st.className='status ok';return}if(!url){st.textContent='Sunucu adresi gir.';st.className='status err';return}st.textContent='Bağlantı deneniyor...';try{const r=await fetch(url,{method:'GET',mode:'cors'});st.textContent='✓ Sunucuya ulaşıldı. HTTP '+r.status;st.className='status ok'}catch(e){st.textContent='Bağlantı kurulamadı: '+e.message;st.className='status err'}};
+$('#generateBtn').onclick=()=>{const type=$('#engineType').value,st=$('#engineStatus');if(type==='demo'){st.textContent='Demo modu gerçek yapay zekâ video üretimi yapmaz. Yerel AI veya özel API bağla.';st.className='status err';return} const url=$('#endpoint').value.trim(); if(!url){st.textContent='Önce video motorunun sunucu adresini gir.';st.className='status err';return} st.textContent='Motor bağlantısı tanımlandı; sağlayıcıya özel üretim protokolü bir sonraki adımda bağlanmalı.';st.className='status'};
+renderProjects();
+</script>
+</body>
+</html>
