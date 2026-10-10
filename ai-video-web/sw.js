@@ -1,4 +1,4 @@
-const CACHE='ai-video-v3';
+const CACHE='ai-video-v3-1';
 const ASSETS=['./','./index.html','./manifest.webmanifest'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
