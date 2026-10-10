@@ -32,7 +32,7 @@ footer{text-align:center;color:#64748b;font-size:11px;padding:22px 0}
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><div class="logo">AI</div><div><h1>AI Video Studio Mobile v2</h1><p>Telefon • ücretsiz LTX video • araştırma • ComfyUI</p></div></div>
+    <div class="brand"><div class="logo">AI</div><div><h1>AI Video Studio Mobile v3.1</h1><p>Telefon • ücretsiz LTX video • araştırma • ComfyUI</p></div></div>
     <div class="tabs">
       <button class="tab active" data-tab="chat">Sohbet</button>
       <button class="tab" data-tab="create">Video</button>
@@ -122,8 +122,8 @@ footer{text-align:center;color:#64748b;font-size:11px;padding:22px 0}
     </div>
 
     <div class="card">
-      <div class="title">Kendi Video Motorun • ComfyUI</div>
-      <div class="sub">Bilgisayarındaki ComfyUI sunucusunu telefonla aynı ağda açarsan kendi GPU'nla üretim yapabilirsin. Sunucuyu CORS açık çalıştırman gerekir.</div>
+      <details style="margin-top:6px"><summary style="cursor:pointer;font-weight:800;color:#cbd5e1;padding:8px 0">Gelişmiş seçenek: Kendi Video Motorun • ComfyUI</summary>
+      <div class="sub">Bilgisayarındaki ComfyUI sunucusunu telefonla aynı ağda açarsan kendi GPU'nla üretim yapabilirsin. Bu bölüm opsiyoneldir; telefondan ücretsiz LTX için yukarıdaki yeşil butonu kullan.</div>
       <label>ComfyUI adresi</label><input id="endpoint" placeholder="http://192.168.1.25:8188"/>
       <button class="btn dark" id="testBtn">BAĞLANTIYI TEST ET</button>
       <div class="status" id="engineStatus">Henüz motor bağlanmadı.</div>
@@ -138,12 +138,13 @@ footer{text-align:center;color:#64748b;font-size:11px;padding:22px 0}
         <div><label>Görsel node ID (opsiyonel)</label><input id="imageNode" placeholder="Örn: 14"/></div>
         <div><label>Görsel alanı</label><input id="imageField" value="image"/></div>
       </div>
-      <div class="hint">LTX-2.3 ComfyUI'de metinden videoya ve görselden videoya workflow'lar destekleniyor. Workflow'u ComfyUI'den API formatında dışa aktar ve buraya yükle. citeturn257122search2turn257122search3</div>
+      <div class="hint">LTX-2.3 ComfyUI'de metinden videoya ve görselden videoya workflow'lar destekleniyor. Workflow'u ComfyUI'den API formatında dışa aktar ve buraya yükle. </div>
       <button class="btn green" id="generateBtn">VİDEO ÜRETİMİNİ BAŞLAT</button>
       <button class="btn red" id="interruptBtn">ÜRETİMİ DURDUR</button>
       <div class="bar"><span id="progressBar"></span></div>
       <div class="status" id="jobStatus">İş bekliyor.</div>
       <div id="outputs"></div>
+      </details>
     </div>
     <div class="card">
       <div class="title">PWA / Telefona Kur</div>
@@ -256,7 +257,11 @@ async function generateFreeLtx(){
   const safe=String(parsed.url).replace(/"/g,'&quot;');
   out.innerHTML='<div class="result"><video controls playsinline style="width:100%;border-radius:12px" src="'+safe+'"></video><a class="outputLink" target="_blank" href="'+safe+'">Videoyu aç / indir</a></div>';
  }catch(e){
-  bar.style.width='0%';status.textContent='Ücretsiz LTX hatası: '+(e.name==='AbortError'?'5 dakika içinde tamamlanmadı. Daha sonra tekrar dene.':e.message);status.className='status err';
+  bar.style.width='0%';
+  status.textContent='Ücretsiz LTX doğrudan bağlantı hatası: '+(e.name==='AbortError'?'5 dakika içinde tamamlanmadı.':' '+e.message);
+  status.className='status err';
+  out.innerHTML='<div class="hint">Bu ücretsiz ortak GPU bazen tarayıcı bağlantısını veya kuyruğu reddedebilir. Aşağıdaki buton resmi LTX alanını açar; promptunu kopyalayıp orada da üretebilirsin.</div><button class="btn dark" id="hfFallbackBtn">RESMİ ÜCRETSİZ LTX ALANINI AÇ</button>';
+  const b=document.getElementById('hfFallbackBtn'); if(b)b.onclick=()=>window.open('https://huggingface.co/spaces/Lightricks/ltx-video-distilled','_blank');
  }
 }
 $('#hfGenerateBtn').onclick=generateFreeLtx;
