@@ -18,3 +18,5 @@ rootProject.name = "HataKayit"
 include(":app")
 
 include(":beforeafter")
+
+include(":qccapp")
