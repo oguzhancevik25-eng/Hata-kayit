@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#0b2a4a"/>
+<link rel="manifest" href="./manifest.webmanifest"/>
+<title>QCC Pro - Kalite Kontrol Çemberi</title>
+<style>
+:root{--navy:#0b2a4a;--blue:#135aa3;--blue2:#1d73c9;--red:#e31b23;--green:#16864b;--amber:#d98c10;--bg:#eef3f8;--card:#fff;--text:#172033;--muted:#6b778b;--line:#d9e2ec}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#eef3f8,#f8fafc);color:var(--text)}
+.app{max-width:1180px;margin:0 auto;padding:0 12px 80px}
+.header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.headerin{max-width:1180px;margin:auto;padding:10px 12px}.brand{display:flex;align-items:center;gap:12px}.mark{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--red),#ff5d63);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{margin:0;font-size:20px}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:8px;overflow:auto;padding:10px 0 2px}.tab{border:1px solid var(--line);background:#fff;color:#41506a;border-radius:999px;padding:9px 12px;font-weight:800;white-space:nowrap}.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.panel{display:none}.panel.active{display:block}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 10px 30px rgba(31,52,76,.07)}.c12{grid-column:span 12}.c8{grid-column:span 8}.c6{grid-column:span 6}.c4{grid-column:span 4}.c3{grid-column:span 3}
+.hero{margin-top:14px;background:linear-gradient(135deg,var(--navy),#123e6a);color:#fff;border:0}.hero .sub{color:#dbeafe}.title{font-size:18px;font-weight:900;margin-bottom:6px}.sub{font-size:13px;color:var(--muted);line-height:1.5}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.kpi{background:#f7fafc;border:1px solid var(--line);border-radius:14px;padding:12px}.hero .kpi{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}.kpi b{display:block;font-size:24px}.kpi span{font-size:11px;color:var(--muted)}.hero .kpi span{color:#dbeafe}
+label{display:block;font-size:12px;font-weight:800;color:#44516a;margin:12px 0 6px}input,textarea,select{width:100%;border:1px solid #cdd8e4;background:#fff;border-radius:12px;padding:11px 12px;font:inherit;color:var(--text);outline:none}textarea{min-height:92px;resize:vertical}input:focus,textarea:focus,select:focus{border-color:#5da3e8;box-shadow:0 0 0 3px rgba(29,115,201,.12)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.btn{border:0;border-radius:12px;padding:11px 14px;font-weight:900;background:var(--blue);color:white;cursor:pointer}.btn.red{background:var(--red)}.btn.green{background:var(--green)}.btn.dark{background:var(--navy)}.btn.gray{background:#637083}.btn.small{padding:7px 10px;font-size:12px}.btnline{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px}.table{width:100%;border-collapse:collapse;min-width:760px}.table th{background:#eef4fa;text-align:left;padding:10px;font-size:12px;color:#33435b}.table td{padding:9px 10px;border-top:1px solid #e7edf4;font-size:13px}.table tr:hover td{background:#fafcff}
+.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800;background:#eaf2fb;color:#245486}.badge.green{background:#e7f6ee;color:#137443}.badge.red{background:#fdebed;color:#b41d28}.badge.amber{background:#fff4dc;color:#9a6508}
+.chart{width:100%;height:300px;background:#fbfdff;border:1px solid #e2eaf2;border-radius:14px;padding:10px}.chart canvas{width:100%!important;height:100%!important}
+.stepper{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}.step{border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;background:#fff;font-size:11px;font-weight:800}.step.done{background:#e9f7ef;border-color:#b7e4c7;color:#106b3c}.step.active{background:#eaf2ff;border-color:#8bb9eb;color:#174f8b}
+.fish{display:grid;grid-template-columns:1fr 1fr;gap:10px}.fishbox{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fbfdff}.fishbox b{font-size:12px;color:var(--navy)}
+.progress{height:10px;background:#e5edf5;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;background:linear-gradient(90deg,var(--blue2),var(--green));width:0}
+.printarea{background:#fff}.sectionHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.note{padding:11px 12px;background:#f5f8fb;border-left:4px solid var(--blue);border-radius:10px;color:#43516a;font-size:12px}
+@media(max-width:820px){.c8,.c6,.c4,.c3{grid-column:span 12}.kpis{grid-template-columns:1fr 1fr}.stepper{grid-template-columns:repeat(4,1fr)}.row2,.row3,.fish{grid-template-columns:1fr}.app{padding-left:8px;padding-right:8px}.card{padding:13px}.chart{height:260px}}
+@media print{.header,.noPrint{display:none!important}.app{max-width:none;padding:0}.card{box-shadow:none;break-inside:avoid}.panel{display:block!important}.printOnly{display:block!important}}
+</style>
+</head>
+<body>
+<div class="header"><div class="headerin">
+  <div class="brand"><div class="mark">QCC</div><div><h1>QCC Pro • Kalite Kontrol Çemberi</h1><p>Fabrika kalite problemi → analiz → karşı önlem → doğrulama → standartlaştırma</p></div></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="project">QCC Projesi</button>
+    <button class="tab" data-tab="data">Veri Girişi</button>
+    <button class="tab" data-tab="analysis">Analiz</button>
+    <button class="tab" data-tab="actions">Aksiyonlar</button>
+    <button class="tab" data-tab="report">Rapor</button>
+    <button class="tab" data-tab="settings">Ayarlar</button>
+  </div>
+</div></div>
+
+<div class="app">
+<section id="dashboard" class="panel active">
+  <div class="card hero">
+    <div class="title">QCC Yönetim Paneli</div>
+    <div class="sub">Verileri girdikçe grafikler, Pareto, pasta dağılımı, trend, hedef durumu ve proje ilerlemesi otomatik oluşur.</div>
+    <div class="kpis">
+      <div class="kpi"><b id="kpiTotal">0</b><span>Toplam hata</span></div>
+      <div class="kpi"><b id="kpiTop">-</b><span>En büyük hata</span></div>
+      <div class="kpi"><b id="kpiImprove">0%</b><span>İyileşme</span></div>
+      <div class="kpi"><b id="kpiProgress">0%</b><span>QCC ilerleme</span></div>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:12px">
+    <div class="card c6"><div class="title">Pareto Analizi</div><div class="sub">Hata adetlerine göre büyükten küçüğe ve kümülatif yüzde.</div><div class="chart"><canvas id="paretoCanvas"></canvas></div></div>
+    <div class="card c6"><div class="title">Hata Dağılımı</div><div class="sub">Toplam hata içindeki paylar.</div><div class="chart"><canvas id="pieCanvas"></canvas></div></div>
+    <div class="card c8"><div class="title">Aylık Trend</div><div class="sub">Aylara göre toplam hata değişimi.</div><div class="chart"><canvas id="trendCanvas"></canvas></div></div>
+    <div class="card c4"><div class="title">QCC 8 Adım</div><div class="stepper" id="stepper"></div><div style="margin-top:12px" class="progress"><span id="projectProgress"></span></div></div>
+  </div>
+</section>
+
+<section id="project" class="panel">
+  <div class="grid" style="margin-top:14px">
+    <div class="card c8">
+      <div class="title">QCC Proje Tanımı</div>
+      <div class="row2"><div><label>Proje adı</label><input id="pName" placeholder="Örn: 130 FR RH beyazlık hatasının azaltılması"></div><div><label>QCC takımı</label><input id="pTeam" placeholder="Kalite Dünyası"></div></div>
+      <div class="row3"><div><label>Makine</label><input id="pMachine" placeholder="1700T"></div><div><label>Parça</label><input id="pPart" placeholder="130 FR Upper Resin RH"></div><div><label>Başlangıç tarihi</label><input id="pStart" type="date"></div></div>
+      <label>Problem tanımı</label><textarea id="pProblem" placeholder="Mevcut durum, hata, müşteri/üretim etkisi..."></textarea>
+      <div class="row2"><div><label>Hedef</label><input id="pTarget" placeholder="Örn: 3 ayda %60 azaltma"></div><div><label>Hedef tarih</label><input id="pTargetDate" type="date"></div></div>
+      <label>Beklenen fayda</label><textarea id="pBenefit" placeholder="Kalite, maliyet, zaman, iş güvenliği, müşteri memnuniyeti..."></textarea>
+      <div class="btnline"><button class="btn green" id="saveProject">PROJEYİ KAYDET</button><button class="btn gray" id="resetProject">TEMİZLE</button></div>
+    </div>
+    <div class="card c4">
+      <div class="title">8 Adım Kontrolü</div><div class="sub">Tamamladığın adımları işaretle.</div>
+      <div id="stepChecks"></div>
+    </div>
+    <div class="card c12">
+      <div class="title">Balık Kılçığı / 6M</div><div class="sub">Kök neden adaylarını kategori bazında yaz.</div>
+      <div class="fish">
+        <div class="fishbox"><b>Man • İnsan</b><textarea id="fMan" placeholder="Eğitim, standart iş, dikkat..."></textarea></div>
+        <div class="fishbox"><b>Machine • Makine</b><textarea id="fMachine" placeholder="Kalıp, sensör, hidrolik..."></textarea></div>
+        <div class="fishbox"><b>Material • Malzeme</b><textarea id="fMaterial" placeholder="Hammadde, nem, lot..."></textarea></div>
+        <div class="fishbox"><b>Method • Metot</b><textarea id="fMethod" placeholder="Parametre, standart, proses..."></textarea></div>
+        <div class="fishbox"><b>Measurement • Ölçüm</b><textarea id="fMeasure" placeholder="Kontrol, ölçüm cihazı..."></textarea></div>
+        <div class="fishbox"><b>Environment • Çevre</b><textarea id="fEnv" placeholder="Isı, nem, temizlik, alan..."></textarea></div>
+      </div>
+    </div>
+    <div class="card c12">
+      <div class="title">5 Neden Analizi</div>
+      <div id="whyList"></div>
+      <div class="btnline"><button class="btn" id="addWhy">NEDEN EKLE</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="data" class="panel">
+  <div class="grid" style="margin-top:14px">
+    <div class="card c4">
+      <div class="title">Hata Verisi Ekle</div>
+      <label>Tarih</label><input id="dDate" type="date">
+      <label>Hata türü</label><input id="dType" placeholder="Beyazlık / Çapak / Eksik...">
+      <div class="row2"><div><label>Adet</label><input id="dCount" type="number" min="0" value="1"></div><div><label>Vardiya</label><select id="dShift"><option>Mavi</option><option>Beyaz</option><option>Kırmızı</option></select></div></div>
+      <label>Makine</label><input id="dMachine" placeholder="1700T">
+      <label>Parça</label><input id="dPart" placeholder="130 FR Upper Resin RH">
+      <label>Not</label><textarea id="dNote" placeholder="Hata bölgesi, koşul, gözlem..."></textarea>
+      <button class="btn green" id="addData">VERİYİ EKLE</button>
+    </div>
+    <div class="card c8">
+      <div class="sectionHead"><div><div class="title">Hata Kayıtları</div><div class="sub">Tüm grafikler bu tablodan otomatik beslenir.</div></div><button class="btn red small" id="clearData">TÜM VERİYİ SİL</button></div>
+      <div class="tablewrap"><table class="table"><thead><tr><th>Tarih</th><th>Hata</th><th>Adet</th><th>Vardiya</th><th>Makine</th><th>Parça</th><th>Not</th><th></th></tr></thead><tbody id="dataBody"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<section id="analysis" class="panel">
+  <div class="grid" style="margin-top:14px">
+    <div class="card c6"><div class="title">Pareto</div><div class="chart"><canvas id="pareto2"></canvas></div></div>
+    <div class="card c6"><div class="title">Pasta Grafiği</div><div class="chart"><canvas id="pie2"></canvas></div></div>
+    <div class="card c6"><div class="title">Vardiya Karşılaştırması</div><div class="chart"><canvas id="shiftCanvas"></canvas></div></div>
+    <div class="card c6"><div class="title">Makine Karşılaştırması</div><div class="chart"><canvas id="machineCanvas"></canvas></div></div>
+    <div class="card c12">
+      <div class="title">Önce / Sonra Doğrulama</div>
+      <div class="row3"><div><label>Önce hata adedi</label><input id="beforeVal" type="number" min="0" value="0"></div><div><label>Sonra hata adedi</label><input id="afterVal" type="number" min="0" value="0"></div><div><label>Hedef hata adedi</label><input id="targetVal" type="number" min="0" value="0"></div></div>
+      <div class="chart" style="margin-top:10px"><canvas id="beforeAfterCanvas"></canvas></div>
+      <div class="note" id="improveNote">İyileşme oranı: %0</div>
+    </div>
+  </div>
+</section>
+
+<section id="actions" class="panel">
+  <div class="grid" style="margin-top:14px">
+    <div class="card c4">
+      <div class="title">Karşı Önlem Ekle</div>
+      <label>Aksiyon</label><textarea id="aAction"></textarea>
+      <div class="row2"><div><label>Sorumlu</label><input id="aOwner"></div><div><label>Termin</label><input id="aDue" type="date"></div></div>
+      <label>Durum</label><select id="aStatus"><option>Planlandı</option><option>Devam Ediyor</option><option>Tamamlandı</option><option>İptal</option></select>
+      <label>Etki / Sonuç</label><textarea id="aResult"></textarea>
+      <button class="btn green" id="addAction">AKSİYON EKLE</button>
+    </div>
+    <div class="card c8">
+      <div class="title">Aksiyon Takip Tablosu</div>
+      <div class="tablewrap"><table class="table"><thead><tr><th>Aksiyon</th><th>Sorumlu</th><th>Termin</th><th>Durum</th><th>Sonuç</th><th></th></tr></thead><tbody id="actionBody"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<section id="report" class="panel">
+  <div class="card printarea" style="margin-top:14px">
+    <div class="sectionHead"><div><div class="title">Otomatik QCC Raporu</div><div class="sub">Mevcut verilerden rapor özeti otomatik hazırlanır.</div></div><div class="btnline noPrint"><button class="btn dark" id="refreshReport">RAPORU YENİLE</button><button class="btn green" onclick="window.print()">YAZDIR / PDF</button></div></div>
+    <div id="reportContent"></div>
+  </div>
+</section>
+
+<section id="settings" class="panel">
+  <div class="grid" style="margin-top:14px">
+    <div class="card c6"><div class="title">Uygulama Ayarları</div><label>Fabrika / bölüm adı</label><input id="sFactory" placeholder="Enjeksiyon Bölümü"><label>Takım lideri</label><input id="sLeader"><label>Departman</label><input id="sDept"><button class="btn green" id="saveSettings">AYARLARI KAYDET</button></div>
+    <div class="card c6"><div class="title">Veri Yönetimi</div><div class="sub">Telefonunda saklanan QCC verilerini JSON olarak yedekleyebilirsin.</div><div class="btnline"><button class="btn" id="exportBtn">YEDEK İNDİR</button><label class="btn gray" style="display:inline-block;margin:0;cursor:pointer">YEDEK YÜKLE<input id="importFile" type="file" accept=".json" style="display:none"></label></div><div class="note">Veriler bu cihazın tarayıcısında tutulur. Tarayıcı verileri silinirse kayıtlar kaybolabilir; düzenli yedek al.</div></div>
+  </div>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const KEY='qcc_pro_v1';
+const steps=['Konu Seçimi','Mevcut Durum','Hedef','Kök Neden','Karşı Önlem','Uygulama','Doğrulama','Standartlaştırma'];
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||{project:{},data:[],actions:[],whys:['','','','',''],stepDone:[false,false,false,false,false,false,false,false],fish:{},settings:{},before:0,after:0,target:0};
+function save(){localStorage.setItem(KEY,JSON.stringify(state));renderAll()}
+$$('.tab').forEach(b=>b.onclick=()=>{$$('.tab').forEach(x=>x.classList.remove('active'));$$('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='report')renderReport()});
+
+function sumBy(arr,key,val='count'){const m={};arr.forEach(x=>{const k=x[key]||'Belirsiz';m[k]=(m[k]||0)+Number(x[val]||0)});return m}
+function pct(a,b){return b?Math.round(a/b*100):0}
+function improve(){const b=Number(state.before||0),a=Number(state.after||0);return b>0?Math.round((b-a)/b*100):0}
+
+function drawBar(canvasId,labels,values,opt={}){
+ const c=document.getElementById(canvasId); if(!c)return; const ctx=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,d=devicePixelRatio||1;c.width=w*d;c.height=h*d;ctx.scale(d,d);ctx.clearRect(0,0,w,h);
+ const pad={l:48,r:20,t:24,b:55},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b,max=Math.max(1,...values);ctx.font='11px system-ui';ctx.fillStyle='#5f6b7d';ctx.strokeStyle='#dbe4ec';ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,h-pad.b);ctx.lineTo(w-pad.r,h-pad.b);ctx.stroke();
+ const bw=Math.max(14,cw/Math.max(1,labels.length)*.6);values.forEach((v,i)=>{const x=pad.l+(i+.5)*cw/labels.length-bw/2,y=h-pad.b-(v/max)*ch;ctx.fillStyle=opt.color||'#1d73c9';ctx.fillRect(x,y,bw,(v/max)*ch);ctx.fillStyle='#223047';ctx.textAlign='center';ctx.fillText(String(v),x+bw/2,y-5);ctx.save();ctx.translate(x+bw/2,h-pad.b+15);ctx.rotate(-.5);ctx.textAlign='right';ctx.fillStyle='#5f6b7d';ctx.fillText(labels[i].slice(0,18),0,0);ctx.restore()});
+ if(opt.line){ctx.strokeStyle='#e31b23';ctx.lineWidth=2;ctx.beginPath();opt.line.forEach((v,i)=>{const x=pad.l+(i+.5)*cw/labels.length,y=h-pad.b-(v/100)*ch;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke()}
+}
+function drawPie(canvasId,labels,values){
+ const c=document.getElementById(canvasId);if(!c)return;const ctx=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,d=devicePixelRatio||1;c.width=w*d;c.height=h*d;ctx.scale(d,d);ctx.clearRect(0,0,w,h);const total=values.reduce((a,b)=>a+b,0)||1,cx=w*.35,cy=h*.48,r=Math.min(w,h)*.3,cols=['#135aa3','#e31b23','#16864b','#d98c10','#6f42c1','#13a3a8','#e56b6f','#697386'];let a=-Math.PI/2;values.forEach((v,i)=>{const da=v/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,a+da);ctx.closePath();ctx.fillStyle=cols[i%cols.length];ctx.fill();a+=da});ctx.font='12px system-ui';labels.slice(0,8).forEach((l,i)=>{const y=28+i*26;ctx.fillStyle=cols[i%cols.length];ctx.fillRect(w*.68,y-9,12,12);ctx.fillStyle='#2b374c';ctx.fillText(l.slice(0,18)+' '+Math.round(values[i]/total*100)+'%',w*.68+18,y)})}
+function drawTrend(canvasId,labels,values){
+ const c=document.getElementById(canvasId);if(!c)return;const ctx=c.getContext('2d'),w=c.clientWidth,h=c.clientHeight,d=devicePixelRatio||1;c.width=w*d;c.height=h*d;ctx.scale(d,d);ctx.clearRect(0,0,w,h);const p={l:48,r:20,t:24,b:42},cw=w-p.l-p.r,ch=h-p.t-p.b,max=Math.max(1,...values);ctx.strokeStyle='#dbe4ec';ctx.beginPath();ctx.moveTo(p.l,p.t);ctx.lineTo(p.l,h-p.b);ctx.lineTo(w-p.r,h-p.b);ctx.stroke();ctx.strokeStyle='#16864b';ctx.lineWidth=3;ctx.beginPath();values.forEach((v,i)=>{const x=p.l+(labels.length===1?cw/2:i*cw/(labels.length-1)),y=h-p.b-v/max*ch;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);ctx.fillStyle='#16864b';ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill()});ctx.font='11px system-ui';ctx.fillStyle='#5f6b7d';labels.forEach((l,i)=>{const x=p.l+(labels.length===1?cw/2:i*cw/(labels.length-1));ctx.textAlign='center';ctx.fillText(l,x,h-16)})}
+
+function renderCharts(){
+ const byType=sumBy(state.data,'type');const entries=Object.entries(byType).sort((a,b)=>b[1]-a[1]);const labels=entries.map(x=>x[0]),vals=entries.map(x=>x[1]),total=vals.reduce((a,b)=>a+b,0),cum=[];let s=0;vals.forEach(v=>{s+=v;cum.push(total?Math.round(s/total*100):0)});
+ drawBar('paretoCanvas',labels,vals,{line:cum});drawBar('pareto2',labels,vals,{line:cum});drawPie('pieCanvas',labels,vals);drawPie('pie2',labels,vals);
+ const months={};state.data.forEach(x=>{const k=x.date?x.date.slice(0,7):'Tarihsiz';months[k]=(months[k]||0)+Number(x.count||0)});const ms=Object.entries(months).sort((a,b)=>a[0].localeCompare(b[0]));drawTrend('trendCanvas',ms.map(x=>x[0]),ms.map(x=>x[1]));
+ const shifts=Object.entries(sumBy(state.data,'shift'));drawBar('shiftCanvas',shifts.map(x=>x[0]),shifts.map(x=>x[1]));
+ const machines=Object.entries(sumBy(state.data,'machine')).sort((a,b)=>b[1]-a[1]);drawBar('machineCanvas',machines.map(x=>x[0]),machines.map(x=>x[1]));
+ drawBar('beforeAfterCanvas',['Önce','Sonra','Hedef'],[Number(state.before||0),Number(state.after||0),Number(state.target||0)],{color:'#135aa3'});
+ $('#improveNote').textContent='İyileşme oranı: %'+improve()+(Number(state.after)<=Number(state.target)&&Number(state.target)>0?' • Hedefe ulaşıldı ✓':'');
+}
+function renderKpis(){const total=state.data.reduce((a,b)=>a+Number(b.count||0),0),by=sumBy(state.data,'type'),top=Object.entries(by).sort((a,b)=>b[1]-a[1])[0];$('#kpiTotal').textContent=total;$('#kpiTop').textContent=top?top[0]:'-';$('#kpiImprove').textContent=improve()+'%';const prog=Math.round(state.stepDone.filter(Boolean).length/8*100);$('#kpiProgress').textContent=prog+'%';$('#projectProgress').style.width=prog+'%'}
+function renderStepper(){const html=steps.map((s,i)=>'<div class="step '+(state.stepDone[i]?'done':'')+'">'+(i+1)+'. '+s+'</div>').join('');$('#stepper').innerHTML=html;$('#stepChecks').innerHTML=steps.map((s,i)=>'<label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input style="width:auto" type="checkbox" data-step="'+i+'" '+(state.stepDone[i]?'checked':'')+'> '+(i+1)+'. '+s+'</label>').join('');$$('[data-step]').forEach(x=>x.onchange=()=>{state.stepDone[+x.dataset.step]=x.checked;save()})}
+function renderData(){const b=$('#dataBody');b.innerHTML=state.data.map((x,i)=>'<tr><td>'+x.date+'</td><td>'+x.type+'</td><td>'+x.count+'</td><td>'+x.shift+'</td><td>'+x.machine+'</td><td>'+x.part+'</td><td>'+x.note+'</td><td><button class="btn red small" onclick="delData('+i+')">Sil</button></td></tr>').join('')}
+window.delData=i=>{state.data.splice(i,1);save()}
+function renderActions(){const b=$('#actionBody');b.innerHTML=state.actions.map((x,i)=>'<tr><td>'+x.action+'</td><td>'+x.owner+'</td><td>'+x.due+'</td><td><span class="badge '+(x.status==='Tamamlandı'?'green':x.status==='İptal'?'red':'amber')+'">'+x.status+'</span></td><td>'+x.result+'</td><td><button class="btn red small" onclick="delAction('+i+')">Sil</button></td></tr>').join('')}
+window.delAction=i=>{state.actions.splice(i,1);save()}
+function renderWhys(){while(state.whys.length<5)state.whys.push('');$('#whyList').innerHTML=state.whys.map((w,i)=>'<label>'+(i+1)+'. Neden?</label><input data-why="'+i+'" value="'+String(w).replace(/"/g,'&quot;')+'" placeholder="Neden oldu?">').join('');$$('[data-why]').forEach(x=>x.onchange=()=>{state.whys[+x.dataset.why]=x.value;save()})}
+
+function fillFields(){
+ const p=state.project||{},f=state.fish||{},s=state.settings||{};[['pName','name'],['pTeam','team'],['pMachine','machine'],['pPart','part'],['pStart','start'],['pProblem','problem'],['pTarget','target'],['pTargetDate','targetDate'],['pBenefit','benefit']].forEach(([id,k])=>{$('#'+id).value=p[k]||''});[['fMan','man'],['fMachine','machine'],['fMaterial','material'],['fMethod','method'],['fMeasure','measure'],['fEnv','env']].forEach(([id,k])=>{$('#'+id).value=f[k]||''});$('#sFactory').value=s.factory||'';$('#sLeader').value=s.leader||'';$('#sDept').value=s.dept||'';$('#beforeVal').value=state.before||0;$('#afterVal').value=state.after||0;$('#targetVal').value=state.target||0;
+}
+function renderReport(){
+ const p=state.project||{},top=Object.entries(sumBy(state.data,'type')).sort((a,b)=>b[1]-a[1])[0],total=state.data.reduce((a,b)=>a+Number(b.count||0),0),done=state.actions.filter(x=>x.status==='Tamamlandı').length;
+ $('#reportContent').innerHTML='<h2 style="color:#0b2a4a">'+(p.name||'QCC Projesi')+'</h2><p><b>Takım:</b> '+(p.team||'-')+' &nbsp; <b>Makine:</b> '+(p.machine||'-')+' &nbsp; <b>Parça:</b> '+(p.part||'-')+'</p><hr><h3>1. Problem</h3><p>'+(p.problem||'-')+'</p><h3>2. Hedef</h3><p>'+(p.target||'-')+'</p><h3>3. Veri Özeti</h3><p>Toplam hata: <b>'+total+'</b>. En yüksek hata: <b>'+(top?top[0]+' ('+top[1]+')':'-')+'</b>.</p><h3>4. Kök Neden</h3><p><b>5 Neden:</b> '+state.whys.filter(Boolean).join(' → ')+'</p><h3>5. Karşı Önlemler</h3><p>'+state.actions.map(x=>'• '+x.action+' — '+x.owner+' — '+x.status).join('<br>')+'</p><h3>6. Sonuç</h3><p>Önce: <b>'+state.before+'</b> / Sonra: <b>'+state.after+'</b> / İyileşme: <b>%'+improve()+'</b> / Tamamlanan aksiyon: <b>'+done+'/'+state.actions.length+'</b></p><h3>7. Standartlaştırma</h3><p>'+(state.stepDone[7]?'Standartlaştırma adımı tamamlandı.':'Standartlaştırma adımı henüz tamamlanmadı.')+'</p>'
+}
+function renderAll(){renderKpis();renderStepper();renderData();renderActions();renderWhys();fillFields();requestAnimationFrame(renderCharts);renderReport()}
+
+$('#saveProject').onclick=()=>{state.project={name:$('#pName').value,team:$('#pTeam').value,machine:$('#pMachine').value,part:$('#pPart').value,start:$('#pStart').value,problem:$('#pProblem').value,target:$('#pTarget').value,targetDate:$('#pTargetDate').value,benefit:$('#pBenefit').value};state.fish={man:$('#fMan').value,machine:$('#fMachine').value,material:$('#fMaterial').value,method:$('#fMethod').value,measure:$('#fMeasure').value,env:$('#fEnv').value};save()}
+$('#resetProject').onclick=()=>{if(confirm('Proje bilgileri temizlensin mi?')){state.project={};state.fish={};save()}}
+$('#addWhy').onclick=()=>{state.whys.push('');save()}
+$('#addData').onclick=()=>{const type=$('#dType').value.trim(),count=Number($('#dCount').value||0);if(!type||count<=0){alert('Hata türü ve adet gir.');return}state.data.push({date:$('#dDate').value||new Date().toISOString().slice(0,10),type,count,shift:$('#dShift').value,machine:$('#dMachine').value,part:$('#dPart').value,note:$('#dNote').value});$('#dType').value='';$('#dCount').value=1;$('#dNote').value='';save()}
+$('#clearData').onclick=()=>{if(confirm('Tüm hata verileri silinsin mi?')){state.data=[];save()}}
+['beforeVal','afterVal','targetVal'].forEach(id=>$('#'+id).oninput=()=>{state.before=Number($('#beforeVal').value||0);state.after=Number($('#afterVal').value||0);state.target=Number($('#targetVal').value||0);localStorage.setItem(KEY,JSON.stringify(state));renderKpis();renderCharts()})
+$('#addAction').onclick=()=>{const action=$('#aAction').value.trim();if(!action){alert('Aksiyon yaz.');return}state.actions.push({action,owner:$('#aOwner').value,due:$('#aDue').value,status:$('#aStatus').value,result:$('#aResult').value});$('#aAction').value='';$('#aOwner').value='';$('#aDue').value='';$('#aResult').value='';save()}
+$('#saveSettings').onclick=()=>{state.settings={factory:$('#sFactory').value,leader:$('#sLeader').value,dept:$('#sDept').value};save()}
+$('#refreshReport').onclick=renderReport;
+$('#exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='QCC_Pro_Yedek_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)}
+$('#importFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{state=JSON.parse(await f.text());save();alert('Yedek yüklendi.')}catch{alert('Geçersiz yedek dosyası.')}}
+window.addEventListener('resize',()=>requestAnimationFrame(renderCharts));
+renderAll();
+</script>
+</body></html>
