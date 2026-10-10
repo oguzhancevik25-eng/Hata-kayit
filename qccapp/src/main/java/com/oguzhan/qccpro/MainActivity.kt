@@ -1,18 +1,54 @@
 package com.oguzhan.qccpro
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
+import android.print.PrintAttributes
+import android.print.PrintManager
+import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private var fileCallback: ValueCallback<Array<android.net.Uri>>? = null
 
-    @SuppressLint("SetJavaScriptEnabled")
+    private val filePicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val data = result.data
+        val uris = when {
+            result.resultCode != RESULT_OK -> null
+            data?.clipData != null -> Array(data.clipData!!.itemCount) { i -> data.clipData!!.getItemAt(i).uri }
+            data?.data != null -> arrayOf(data.data!!)
+            else -> null
+        }
+        fileCallback?.onReceiveValue(uris)
+        fileCallback = null
+    }
+
+    inner class AndroidBridge {
+        @JavascriptInterface
+        fun printPage() {
+            runOnUiThread {
+                val printManager = getSystemService(PRINT_SERVICE) as PrintManager
+                val adapter = webView.createPrintDocumentAdapter("QCC_Pro_Sunum")
+                printManager.print(
+                    "QCC Pro Sunum",
+                    adapter,
+                    PrintAttributes.Builder()
+                        .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                        .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                        .build()
+                )
+            }
+        }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -22,10 +58,26 @@ class MainActivity : AppCompatActivity() {
             settings.databaseEnabled = true
             settings.allowFileAccess = true
             settings.allowContentAccess = true
-            settings.cacheMode = WebSettings.LOAD_DEFAULT
+            settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
             settings.mediaPlaybackRequiresUserGesture = false
-            webChromeClient = WebChromeClient()
+            addJavascriptInterface(AndroidBridge(), "Android")
             webViewClient = WebViewClient()
+            webChromeClient = object : WebChromeClient() {
+                override fun onShowFileChooser(
+                    webView: WebView?,
+                    filePathCallback: ValueCallback<Array<android.net.Uri>>?,
+                    fileChooserParams: FileChooserParams?
+                ): Boolean {
+                    fileCallback?.onReceiveValue(null)
+                    fileCallback = filePathCallback
+                    val intent = fileChooserParams?.createIntent() ?: Intent(Intent.ACTION_GET_CONTENT).apply {
+                        type = "image/*"
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                    }
+                    filePicker.launch(Intent.createChooser(intent, "Fotoğraf / Dosya seç"))
+                    return true
+                }
+            }
             loadUrl("file:///android_asset/qcc/index.html")
         }
 
@@ -38,6 +90,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        fileCallback?.onReceiveValue(null)
         webView.destroy()
         super.onDestroy()
     }
