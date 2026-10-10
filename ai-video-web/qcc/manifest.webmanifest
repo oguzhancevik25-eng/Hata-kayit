@@ -1,0 +1,10 @@
+{
+  "name":"QCC Pro - Kalite Kontrol Çemberi",
+  "short_name":"QCC Pro",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#eef3f8",
+  "theme_color":"#0b2a4a",
+  "description":"Fabrika için QCC kalite kontrol çemberi uygulaması"
+}
