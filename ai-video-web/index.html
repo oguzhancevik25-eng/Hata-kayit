@@ -32,7 +32,7 @@ footer{text-align:center;color:#64748b;font-size:11px;padding:22px 0}
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><div class="logo">AI</div><div><h1>AI Video Studio Mobile v3.1</h1><p>Telefon • ücretsiz LTX video • araştırma • ComfyUI</p></div></div>
+    <div class="brand"><div class="logo">AI</div><div><h1>AI Video Studio Mobile v3.2</h1><p>Telefon • ücretsiz LTX video • araştırma • ComfyUI</p></div></div>
     <div class="tabs">
       <button class="tab active" data-tab="chat">Sohbet</button>
       <button class="tab" data-tab="create">Video</button>
@@ -109,6 +109,10 @@ footer{text-align:center;color:#64748b;font-size:11px;padding:22px 0}
     <div class="card">
       <div class="title">Ücretsiz Gerçek AI Video • LTX ZeroGPU</div>
       <div class="sub">Bu mod doğrudan herkese açık LTX-Video ZeroGPU alanına bağlanır. API anahtarı istemez; ücretsiz ortak kuyruk kullanır. Tek üretim en fazla 8.5 saniyedir ve yoğunlukta sıra bekleyebilir.</div>
+      <div class="hint">Hugging Face ZeroGPU anonim kullanım çok kısıtlıdır. Ücretsiz HF hesabın varsa kendi tokenını girersen kişisel ücretsiz kotan kullanılır. Token yalnızca bu telefonun tarayıcısında saklanır.</div>
+      <label>Hugging Face token (opsiyonel ama önerilir)</label>
+      <input id="hfToken" type="password" placeholder="hf_..."/>
+      <button class="btn dark" id="saveHfToken">HF TOKENI KAYDET</button>
       <label>Ücretsiz LTX klip süresi</label>
       <select id="hfDuration"><option value="3">3 sn</option><option value="5">5 sn</option><option value="8" selected>8 sn</option></select>
       <div class="grid2">
@@ -219,6 +223,8 @@ $('#researchBtn').onclick=async()=>{
 
 
 const HF_SPACE='https://lightricks-ltx-video-distilled.hf.space';
+$('#hfToken').value=localStorage.getItem('hf_token')||'';
+$('#saveHfToken').onclick=()=>{const t=$('#hfToken').value.trim();if(t)localStorage.setItem('hf_token',t);else localStorage.removeItem('hf_token');$('#hfStatus').textContent=t?'✓ HF token bu telefonda kaydedildi.':'HF token temizlendi.';$('#hfStatus').className='status ok';};
 function parseHfSse(raw){
  const blocks=raw.split('\n\n').filter(Boolean).reverse();
  for(const block of blocks){
@@ -244,12 +250,14 @@ async function generateFreeLtx(){
  try{
   status.textContent='Ücretsiz LTX kuyruğuna gönderiliyor...';status.className='status';bar.style.width='8%';out.innerHTML='';
   const data=[prompt,neg,'','',height,width,'text-to-video',duration,9,42,true,1,true];
-  const submit=await fetch(HF_SPACE+'/gradio_api/call/text_to_video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})});
+  const token=$('#hfToken').value.trim();
+  const headers={'Content-Type':'application/json'}; if(token)headers['Authorization']='Bearer '+token;
+  const submit=await fetch(HF_SPACE+'/gradio_api/call/v2/text_to_video',{method:'POST',headers,body:JSON.stringify({data})});
   if(!submit.ok) throw Error('Kuyruğa eklenemedi HTTP '+submit.status);
   const sj=await submit.json(); if(!sj.event_id) throw Error('İş numarası alınamadı');
   status.textContent='✓ İş sırada. Ücretsiz GPU bekleniyor...';status.className='status ok';bar.style.width='20%';
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),5*60*1000);
-  const result=await fetch(HF_SPACE+'/gradio_api/call/text_to_video/'+encodeURIComponent(sj.event_id),{signal:controller.signal});
+  const result=await fetch(HF_SPACE+'/gradio_api/call/v2/text_to_video/'+encodeURIComponent(sj.event_id),{headers: token?{'Authorization':'Bearer '+token}:{},signal:controller.signal});
   clearTimeout(timer);
   if(!result.ok) throw Error('Sonuç bağlantısı kesildi HTTP '+result.status);
   bar.style.width='75%';const raw=await result.text();const parsed=parseHfSse(raw);bar.style.width='100%';
@@ -258,9 +266,9 @@ async function generateFreeLtx(){
   out.innerHTML='<div class="result"><video controls playsinline style="width:100%;border-radius:12px" src="'+safe+'"></video><a class="outputLink" target="_blank" href="'+safe+'">Videoyu aç / indir</a></div>';
  }catch(e){
   bar.style.width='0%';
-  status.textContent='Ücretsiz LTX doğrudan bağlantı hatası: '+(e.name==='AbortError'?'5 dakika içinde tamamlanmadı.':' '+e.message);
+  status.textContent='Ücretsiz LTX bağlantı hatası: '+(e.name==='AbortError'?'5 dakika içinde tamamlanmadı.':e.message);
   status.className='status err';
-  out.innerHTML='<div class="hint">Bu ücretsiz ortak GPU bazen tarayıcı bağlantısını veya kuyruğu reddedebilir. Aşağıdaki buton resmi LTX alanını açar; promptunu kopyalayıp orada da üretebilirsin.</div><button class="btn dark" id="hfFallbackBtn">RESMİ ÜCRETSİZ LTX ALANINI AÇ</button>';
+  out.innerHTML='<div class="hint">ZeroGPU API bazen anonim kotayı, Gradio video çıktısını veya ortak kuyruğu reddedebilir. Ücretsiz Hugging Face hesabıyla giriş yapıp bir token eklemek başarı ihtimalini yükseltir. Yine olmazsa resmi LTX alanını aç.</div><button class="btn dark" id="hfFallbackBtn">RESMİ ÜCRETSİZ LTX ALANINI AÇ</button>';
   const b=document.getElementById('hfFallbackBtn'); if(b)b.onclick=()=>window.open('https://huggingface.co/spaces/Lightricks/ltx-video-distilled','_blank');
  }
 }
