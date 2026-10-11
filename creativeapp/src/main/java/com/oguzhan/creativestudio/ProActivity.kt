@@ -90,7 +90,7 @@ fun ProApp() {
 
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         val room = 10 - media.size
-        val add = uris.take(room).mapNotNull { mediaInfo(ctx, it) }
+        val add = uris.take(room).mapNotNull { proMediaInfo(ctx, it) }
         media = (media + add).take(10)
         status = media.size.toString() + "/10 medya hazır"
     }
@@ -187,7 +187,7 @@ fun ProApp() {
                                         Spacer(Modifier.width(8.dp))
                                         Column(Modifier.weight(1f)) {
                                             Text(m.name, maxLines = 1, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                            Text(formatSize(m.size), fontSize = 10.sp, color = Color.Gray)
+                                            Text(proFormatSize(m.size), fontSize = 10.sp, color = Color.Gray)
                                         }
                                         IconButton(onClick = { media = media.toMutableList().also { it.removeAt(i) } }) { Icon(Icons.Default.Close, null) }
                                     }
@@ -482,7 +482,7 @@ object GeminiV2 {
     }
 }
 
-fun mediaInfo(ctx: Context, uri: Uri): RefMedia? = try {
+fun proMediaInfo(ctx: Context, uri: Uri): RefMedia? = try {
     var name = "Medya"
     var size = 0L
     ctx.contentResolver.query(uri, null, null, null, null)?.use { c ->
@@ -496,7 +496,7 @@ fun mediaInfo(ctx: Context, uri: Uri): RefMedia? = try {
     RefMedia(uri, name, ctx.contentResolver.getType(uri) ?: "application/octet-stream", size)
 } catch (_: Exception) { null }
 
-fun formatSize(v: Long): String = when {
+fun proFormatSize(v: Long): String = when {
     v >= 1024 * 1024 -> "%.1f MB".format(v / 1024.0 / 1024.0)
     v >= 1024 -> "%.0f KB".format(v / 1024.0)
     else -> v.toString() + " B"
