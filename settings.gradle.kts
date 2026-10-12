@@ -22,3 +22,5 @@ include(":beforeafter")
 include(":qccapp")
 
 include(":creativeapp")
+
+include(":libraryapp")
