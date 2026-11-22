@@ -516,11 +516,11 @@ class XlsxKaizenBuilder(private val context: Context) {
             val cleaned = attrs.replace(Regex("\\s+t=\"[^\"]*\""), "")
             return "<c" + cleaned + " t=\"inlineStr\"><is><t xml:space=\"preserve\">" + escaped + "</t></is></c>"
         }
-        return when {
-            full.containsMatchIn(xml) -> full.replaceFirst(xml) { make(it.groupValues[1]) }
-            self.containsMatchIn(xml) -> self.replaceFirst(xml) { make(it.groupValues[1]) }
-            else -> error("Şablonda hedef hücre bulunamadı: " + addr)
-        }
+        val fm = full.find(xml)
+        if (fm != null) return xml.replaceRange(fm.range, make(fm.groupValues[1]))
+        val sm = self.find(xml)
+        if (sm != null) return xml.replaceRange(sm.range, make(sm.groupValues[1]))
+        error("Şablonda hedef hücre bulunamadı: " + addr)
     }
 
     private fun xmlEscape(s: String): String = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;")
