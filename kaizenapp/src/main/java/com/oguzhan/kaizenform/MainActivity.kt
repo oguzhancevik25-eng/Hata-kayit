@@ -377,13 +377,23 @@ class MainActivity : ComponentActivity() {
 
     private fun shareXlsx(file: File) {
         val uri = FileProvider.getUriForFile(this, packageName + ".fileprovider", file)
-        val intent = Intent(Intent.ACTION_SEND).apply {
+
+        fun shareIntent(): Intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_TEXT, "Doldurulmuş Kaizen Excel formu")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        startActivity(Intent.createChooser(intent, "Excel'i paylaş"))
+
+        try {
+            startActivity(shareIntent().apply { setPackage("com.whatsapp") })
+        } catch (_: Exception) {
+            try {
+                startActivity(shareIntent().apply { setPackage("com.whatsapp.w4b") })
+            } catch (_: Exception) {
+                startActivity(Intent.createChooser(shareIntent(), "Excel'i paylaş"))
+            }
+        }
     }
 
     private fun saveToDownloads(bytes: ByteArray, fileName: String) {
